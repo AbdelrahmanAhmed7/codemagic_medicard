@@ -1,0 +1,957 @@
+{
+  "common": {
+    "save": "حفظ",
+    "edit": "تعديل",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "ok": "موافق",
+    "retry": "إعادة المحاولة",
+    "send": "إرسال",
+    "next": "التالي",
+    "skip": "تخطي",
+    "get_started": "ابدأ الآن",
+    "search": "بحث",
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "back_home": "العودة للرئيسية",
+    "success": "نجاح",
+    "no_data": "لا توجد بيانات متاحة",
+    "active": "مفعل",
+    "back": "رجوع",
+    "choose": "اختر",
+    "no_internet": "لا يوجد اتصال بالإنترنت",
+    "connection_error": "خطأ في الاتصال، يرجى التحقق من اتصالك بالإنترنت",
+    "try_again": "حاول مرة أخرى",
+    "dismiss": "إغلاق",
+    "cannot_open_pdf": "تعذر فتح ملف PDF",
+    "pdf_not_available": "ملف PDF غير متاح",
+    "error_loading_pdf": "حدث خطأ أثناء تحميل ملف PDF",
+    "request_timeout": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى",
+    "instructions": "التعليمات",
+    "delete": "حذف",
+    "delete_attachment": "حذف المرفق",
+    "delete_attachment_message": "هل أنت متأكد أنك تريد حذف هذا الملف نهائياً؟",
+    "error_title": "حدث خطأ",
+    "retry_button": "إعادة المحاولة",
+    "refresh": "تحديث",
+    "no_data_available": "لا توجد بيانات متاحة حالياً",
+    "egp": "جنيه",
+    "whatsapp_mobile": "واتساب / موبايل",
+    "mobile_landline": "موبايل / أرضي",
+    "hotline": "الخط الساخن"
+  },
+  "errors": {
+    "connection_timeout": "انتهت مهلة الاتصال، يرجى المحاولة لاحقاً",
+    "bad_request": "طلب غير صحيح، يرجى التحقق من البيانات المدخلة",
+    "unauthorized": "غير مصرح، يرجى تسجيل الدخول مرة أخرى",
+    "access_denied": "تم رفض الوصول",
+    "not_found": "الصفحة المطلوبة غير موجودة",
+    "internal_server_error": "خطأ في الخادم الداخلي",
+    "unexpected_error": "خطأ غير متوقع في الخادم",
+    "no_internet": "لا يوجد اتصال بالإنترنت، يرجى التحقق من الشبكة",
+    "connection_error": "خطأ في الاتصال، يرجى التحقق من اتصالك بالإنترنت",
+    "something_went_wrong": "حدث خطأ ما، يرجى المحاولة مرة أخرى",
+    "unexpected_error_occurred": "حدث خطأ غير متوقع",
+    "network_error": "لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة",
+    "timeout_error": "انتهت مهلة الطلب. يرجى المحاولة مرة أخرى",
+    "session_expired": "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى",
+    "forbidden_error": "تم رفض الوصول. ليس لديك الصلاحية",
+    "not_found_error": "المورد المطلوب غير موجود",
+    "server_error": "خطأ في الخادم. يرجى المحاولة لاحقاً",
+    "generic_error": "حدث خطأ ما. يرجى المحاولة مرة أخرى"
+  },
+  "logout": {
+    "confirmation_message": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+    "confirm_button": "تسجيل الخروج"
+  },
+  "update": {
+    "available_title": "تحديث متاح",
+    "available_message": "يوجد إصدار جديد من التطبيق. يرجى التحديث للمتابعة في استخدام التطبيق.",
+    "update_now": "تحديث الآن",
+    "update_later": "تحديث لاحقاً"
+  },
+  "policy_screen": {
+    "title": "البوليسي",
+    "services": "الخدمات",
+    "search": "بحث",
+    "details": "تفاصيل البوليسي",
+    "service_name": "اسم الخدمة",
+    "coverage": "نسبة التغطية",
+    "coverage_type": "نوع التغطية",
+    "providers": "مقدمي الخدمة",
+    "medication_coverage": "نسبة التغطية",
+    "policy": "بوليسي",
+    "policy_title_prefix": "بوليصة",
+    "pharmacy": "صيدلية",
+    "dental_services": "خدمات الأسنان",
+    "standart_copayment": "التحمل",
+    "standard_copayment": "تحمل قياسي",
+    "higher_copayment": "تحمل أعلى",
+    "highest_copayment": "أعلى تحمل",
+    "view_details": "عرض التفاصيل",
+    "lab": "معمل",
+    "hospital": "مستشفى",
+    "doctor": "طبيب",
+    "scan_lab": "معمل أشعة",
+    "specialized_center": "مركز متخصص",
+    "physiotherapy": "علاج طبيعي",
+    "optical_center": "مركز نظارات",
+    "pharmacies": "صيدليات",
+    "labs": "معامل",
+    "hospitals": "مستشفيات",
+    "doctors": "أطباء",
+    "scan_labs": "معامل أشعة",
+    "specialized_centers": "مراكز متخصصة",
+    "optical_centers": "مراكز نظارات"
+  },
+  "onboarding": {
+    "welcome_to": "مرحباً بك في ",
+    "medi": "ميدي",
+    "consult": "كونسلت",
+    "welcome_description": "احصل على وصول إلى شبكة واسعة من\nالمستشفيات والعيادات والصيدليات والمختبرات",
+    "insurance_in_pocket": "تأمينك في جيبك",
+    "insurance_description": "ابحث عن مقدمي الخدمات في شبكتك",
+    "find_hospitals": "مقدمي الخدمة",
+    "find_hospitals_description": "عرض قائمة مقدمي الخدمات في شبكتك\nالقريبين من موقعك",
+    "pre_approvals": "الموافقات المسبقة",
+    "pre_approvals_description": "عرض حالة الطلبات المعلقة\nللموافقة"
+  },
+  "auth": {
+    "login": {
+      "title": "مرحباً بعودتك! سعيد لرؤيتك\nمرة أخرى!",
+      "subtitle": "يرجى إدخال بيانات اعتمادك لتسجيل الدخول",
+      "card_id": "رقم البطاقة",
+      "card_id_placeholder": "أدخل رقم البطاقة",
+      "medicard_number": "رقم ميدي كارد",
+      "medicard_number_placeholder": "أدخل رقم ميدي كارد",
+      "password": "كلمة المرور",
+      "password_placeholder": "أدخل كلمة المرور",
+      "forgot_password": "نسيت كلمة المرور؟",
+      "login_button": "تسجيل الدخول",
+      "logging_in": "جاري تسجيل الدخول...",
+      "dont_have_account": "ليس لديك حساب؟ ",
+      "register": "إنشاء حساب",
+      "login_successful": "تم تسجيل الدخول بنجاح",
+      "fill_all_fields": "يرجى التأكد من ملء جميع الحقول المطلوبة",
+      "validation": {
+        "card_id_required": "يرجى إدخال رقم البطاقة",
+        "card_id_start": "رقم البطاقة يجب أن يبدأ بـ 20",
+        "card_id_length": "رقم البطاقة يجب أن يكون 7 أرقام بالضبط",
+        "card_id_numbers": "رقم البطاقة يجب أن يحتوي على أرقام فقط",
+        "medicard_required": "يرجى إدخال رقم ميدي كارد",
+        "password_required": "يرجى إدخال كلمة المرور",
+        "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        "phone_length": "رقم الهاتف يجب أن يكون 11 رقماً"
+      }
+    },
+    "signup": {
+      "title": "مرحباً! سجل للبدء",
+      "subtitle": "يرجى إدخال بيانات اعتمادك",
+      "card_id": "رقم البطاقة ",
+      "card_id_placeholder": "أدخل رقم البطاقة",
+      "national_id": "الرقم القومي",
+      "national_id_placeholder": "أدخل الرقم القومي",
+      "passport": "رقم جواز السفر",
+      "passport_placeholder": "أدخل رقم جواز السفر",
+      "phone_number": "رقم الهاتف ",
+      "phone_number_placeholder": "أدخل رقم الهاتف",
+      "password": "كلمة المرور ",
+      "password_placeholder": "أدخل كلمة المرور",
+      "confirm_password": "تأكيد كلمة المرور ",
+      "confirm_password_placeholder": "أدخل تأكيد كلمة المرور",
+      "register_button": "إنشاء حساب",
+      "registering": "جاري إنشاء الحساب...",
+      "already_have_account": "لديك حساب بالفعل؟ ",
+      "login": "تسجيل الدخول",
+      "registration_successful": "تم إنشاء الحساب بنجاح",
+      "validation": {
+        "card_id_required": "رقم البطاقة مطلوب",
+        "card_id_numbers": "رقم البطاقة يجب أن يحتوي على أرقام فقط",
+        "card_id_start": "رقم البطاقة يجب أن يبدأ بـ 20",
+        "national_id_required": "الرقم القومي مطلوب",
+        "national_id_invalid": "أدخل رقماً قومياً صحيحاً مكون من 14 رقم",
+        "id_or_passport_required": "يرجى إدخال الرقم القومي أو رقم جواز السفر",
+        "phone_required": "رقم الهاتف مطلوب",
+        "phone_hint": "أدخل رقم الهاتف",
+        "phone_starts_with_zero": "يرجى إدخال رقم الهاتف بدون البدء بصفر",
+        "phone_invalid": "يرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 10 أو 11 أو 12 أو 15",
+        "password_required": "كلمة المرور مطلوبة",
+        "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        "confirm_password_required": "تأكيد كلمة المرور مطلوب",
+        "passwords_not_match": "كلمات المرور غير متطابقة",
+        "first_name_required": "الاسم الأول مطلوب",
+        "last_name_required": "الاسم الأخير مطلوب"
+      }
+    },
+    "forgot_password": {
+      "otp_title": "تأكيد رمز التحقق",
+      "title": "نسيت كلمة المرور",
+      "description": "لا تقلق! هذا يحدث. يرجى إدخال رقم هاتفك وسنرسل رمز التحقق إلى هذا الرقم.",
+      "phone_number": "رقم الهاتف",
+      "phone_placeholder": "أدخل رقم هاتفك",
+      "send_button": "إرسال",
+      "sending": "جاري الإرسال...",
+      "change_phone": "هل تريد تغيير رقم الهاتف؟",
+      "contact_us": "اتصل بنا",
+      "otp_message": "رمز التحقق: {otp}",
+      "otp_sent_success": "تم إرسال رمز التحقق بنجاح",
+      "otp_instruction": "يرجى إدخال رمز التحقق الذي أرسلناه إلى {phone}",
+      "otp_expire_in": "ستنتهي صلاحية رمز التحقق خلال {time}",
+      "resend_code": "إعادة إرسال الرمز",
+      "otp_resend_success": "تم إعادة إرسال رمز التحقق بنجاح",
+      "otp_verified": "تم التحقق من الرمز بنجاح",
+      "verifying": "جاري التحقق...",
+      "verify": "تحقق",
+      "validation": {
+        "phone_required": "يرجى إدخال رقم هاتفك",
+        "phone_hint": "أدخل رقم الهاتف",
+        "phone_starts_with_zero": "يرجى إدخال رقم الهاتف بدون البدء بصفر",
+        "phone_invalid": "يرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 10 أو 11 أو 12 أو 15"
+      }
+    },
+    "reset_password": {
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "أنشئ كلمة مرور جديدة. تأكد من أنها تختلف عن السابقة للأمان.",
+      "new_password": "كلمة المرور الجديدة",
+      "new_password_placeholder": "إنشاء كلمة مرور",
+      "confirm_password": "تأكيد كلمة المرور",
+      "confirm_password_placeholder": "تأكيد كلمة المرور",
+      "confirm_button": "تأكيد",
+      "congratulations": "تهانينا!",
+      "success_message": "تم تغيير كلمة المرور بنجاح\nستتم إعادة توجيهك إلى شاشة تسجيل الدخول الآن",
+      "validation": {
+        "new_password_required": "يرجى إدخال كلمة مرور جديدة",
+        "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+        "confirm_password_required": "يرجى تأكيد كلمة المرور",
+        "passwords_not_match": "كلمات المرور غير متطابقة"
+      }
+    }
+  },
+  "home": {
+    "title": "الرئيسية",
+    "error_loading": "حدث خطأ أثناء تحميل البيانات",
+    "partners": "شركاؤنا المتميزون",
+    "hello": "مرحباً",
+    "health_question": "كيف حالتك الصحية الآن؟",
+    "member_id": "رقم العضوية",
+    "expire_date": "تاريخ الانتهاء",
+    "ongoing_requests": "الطلبات الجارية",
+    "see_all": "عرض الكل",
+    "no_ongoing_requests": "لا توجد طلبات جارية",
+    "service_type": "نوع الخدمة",
+    "no_notes": "لا توجد ملاحظات",
+    "date": "التاريخ",
+    "health_tips": "نصائح صحية",
+    "health_tips_title": "احصل على فحوصات منتظمة",
+    "health_tips_description": "يمكن أن تساعد الفحوصات السنوية على اكتشاف الأمراض مبكراً والحفاظ على صحتك لفترة أطول!",
+    "health_tips_hydration_title": "حافظ على رطوبة جسمك",
+    "health_tips_hydration_desc": "شرب كمية كافية من الماء يومياً أمر بالغ الأهمية لأسباب عديدة: لتنظيم درجة حرارة الجسم، والحفاظ على ليونة المفاصل، والوقاية من العدوى، وإيصال العناصر الغذائية للخلايا.",
+    "health_tips_exercise_title": "ممارسة الرياضة بانتظام",
+    "health_tips_exercise_desc": "النشاط البدني المنتظم يمكن أن يحسن قوة عضلاتك ويعزز قدرتك على التحمل.",
+    "health_tips_sleep_title": "نم جيداً",
+    "health_tips_sleep_desc": "النوم الجيد يحسن أداء عقلك ومزاجك وصحتك.",
+    "explore": "استكشف",
+    "visit_website": "زيارة الموقع"
+  },
+  "profile": {
+    "title": "الملف الشخصي",
+    "member_id": "رقم العضوية: ",
+    "error_loading_profile": "خطأ في تحميل الملف الشخصي",
+    "account": "الحساب",
+    "personal_information": "المعلومات الشخصية",
+    "family_members": "أفراد العائلة",
+    "insurance_plan": "خطة التأمين",
+    "settings": "الإعدادات",
+    "change_password": "تغيير كلمة المرور",
+    "language": "اللغة",
+    "help_support": "المساعدة والدعم",
+    "faq": "الأسئلة الشائعة",
+    "contact_us": "اتصل بنا",
+    "terms_privacy": "الشروط وسياسة الخصوصية",
+    "log_out": "تسجيل الخروج"
+  },
+  "personal_info": {
+    "title": "المعلومات الشخصية",
+    "profile_photo": "صورة الملف الشخصي",
+    "full_name": "الاسم الكامل",
+    "insurance_card_id": "رقم بطاقة التأمين",
+    "phone_number": "رقم الهاتف",
+    "date_of_birth": "تاريخ الميلاد",
+    "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى",
+    "email_address": "عنوان البريد الإلكتروني",
+    "address": "العنوان",
+    "validation": {
+      "full_name_required": "الاسم الكامل مطلوب",
+      "insurance_id_required": "رقم بطاقة التأمين مطلوب",
+      "phone_required": "رقم الهاتف مطلوب",
+      "phone_length": "رقم الهاتف يجب أن يكون 11 رقم على الأقل",
+      "dob_required": "تاريخ الميلاد مطلوب",
+      "gender_required": "الجنس مطلوب",
+      "email_invalid": "يرجى إدخال عنوان بريد إلكتروني صحيح"
+    }
+  },
+  "change_password": {
+    "old_password": "كلمة المرور القديمة",
+    "old_password_placeholder": "أدخل كلمة المرور القديمة",
+    "new_password": "كلمة المرور الجديدة",
+    "new_password_placeholder": "أدخل كلمة المرور الجديدة",
+    "confirm_password": "تأكيد كلمة المرور",
+    "confirm_password_placeholder": "تأكيد كلمة المرور الجديدة",
+    "password_requirements": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+    "success_message": "تهانينا تم تغيير كلمة المرور بنجاح.",
+    "validation": {
+      "old_password_required": "كلمة المرور القديمة مطلوبة",
+      "new_password_required": "كلمة المرور الجديدة مطلوبة",
+      "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+      "password_uppercase": "كلمة المرور يجب أن تشمل حرف كبير واحد",
+      "confirm_password_required": "يرجى تأكيد كلمة المرور",
+      "passwords_not_match": "كلمات المرور غير متطابقة"
+    }
+  },
+  "language": {
+    "title": "اللغة",
+    "change_language": "تغيير اللغة",
+    "english": "English",
+    "arabic": "العربية",
+    "language_changed": "تم تغيير اللغة إلى ",
+    "language_changed_successfully": "تم تغيير اللغة بنجاح إلى"
+  },
+  "faq": {
+    "title": "الأسئلة الشائعة",
+    "search_placeholder": "بحث",
+    "categories": {
+      "general": "عام",
+      "approval": "الموافقة",
+      "refund": "الاسترداد",
+      "medications": "الأدوية والصيدليات"
+    }
+  },
+  "contact_us": {
+    "title": "اتصل بنا",
+    "chat": "محادثة",
+    "chat_subtitle": "تحدث مع فريقنا",
+    "phone": "رقم الهاتف",
+    "email": "البريد الإلكتروني",
+    "other_contacts": "وسائل التواصل الأخرى",
+    "whatsapp": "واتساب",
+    "website": "الموقع الإلكتروني",
+    "linkedin": "لينكد إن",
+    "instagram": "إنستجرام"
+  },
+  "network": {
+    "title": "شبكة مقدمي الخدمات",
+    "search_placeholder": "ابحث عن عيادة، مستشفى أو صيدلية...",
+    "highest_discount": "الأعلى خصماً",
+    "sort": "الترتيب",
+    "all": "الكل",
+    "search_customization": "تخصيص البحث",
+    "no_providers": "لم يتم العثور على مقدمي خدمات",
+    "no_results_for": "لا توجد نتائج لـ \"{}\"",
+    "no_results": "لا توجد نتائج",
+    "try_different_search": "جرب كلمة بحث مختلفة أو اختر من الاقتراحات أدناه",
+    "try_changing_filters": "جرب تغيير الفلاتر أو كلمة البحث",
+    "search_instead_in": "ابحث بدلًا عن ذلك في:",
+    "hospital_suggestion": "مستشفى",
+    "clinic_suggestion": "عيادة",
+    "pharmacy_suggestion": "صيدلية",
+    "dental_suggestion": "أسنان",
+    "lab_suggestion": "معمل",
+    "scan_suggestion": "أشعة",
+    "km": "كم",
+    "more": "المزيد",
+    "available_services_discounts": "الخدمات المتاحة والخصومات",
+    "available_service_count": "{} خدمة متاحة",
+    "loading_providers": "جاري تحميل مقدمي الخدمات...",
+    "search_description": "استخدم شريط البحث أو الفلاتر للعثور على مقدمي الرعاية الصحية القريبين",
+    "navigate": "انتقال",
+    "filter_no_results": "لا توجد نتائج للفلترة المحددة",
+    "filter_no_results_description": "حاول تغيير معايير الفلترة للحصول على نتائج",
+    "location_service_title": "تفعيل خدمة الموقع",
+    "location_service_body": "لعرض مقدمي الخدمة الأقرب إليك، يرجى تفعيل خدمة الموقع (GPS) على جهازك.",
+    "open_settings": "فتح الإعدادات",
+    "location_access_denied_title": "الوصول للموقع محظور",
+    "location_access_denied_body": "قمت بحظر الوصول للموقع بشكل دائم. يمكنك تفعيله من إعدادات التطبيق.",
+    "open_app_settings": "فتح إعدادات التطبيق",
+    "continue_without_location": "المتابعة بدون موقع",
+    "location_banner_denied": "فعّل الموقع لعرض مقدمي الخدمة مرتبة حسب المسافة.",
+    "location_banner_retry": "تفعيل",
+    "results_count": "{} نتيجة",
+    "categories": "الفئات",
+    "filters": "الفلاتر",
+    "clear_filters": "مسح الفلاتر",
+    "government": "المحافظة",
+    "city": "المدينة",
+    "no_providers_found": "لم يتم العثور على مقدمي خدمة",
+    "try_searching_another": "حاول البحث عن شيء آخر",
+    "call": "اتصال",
+    "services": "الخدمات",
+    "show_discounted_only": "عرض المخصوم فقط",
+    "category_count": "تصنيف",
+    "provider_count": "مقدم خدمة",
+    "location_and_address": "الموقع والعنوان",
+    "open_in_maps": "فتح في الخرائط",
+    "services_and_discounts": "الخدمات والخصومات",
+    "directions": "الاتجاهات"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "no_notifications": "لا توجد إشعارات بعد",
+    "no_notifications_desc": "سنقوم بإشعارك عند حدوث شيء مهم",
+    "pull_to_refresh": "اسحب للأسفل للتحديث",
+    "mark_all_read": "تحديد الكل كمقروء",
+    "marked_all_read": "تم تحديد جميع الإشعارات كمقروءة",
+    "mark_read": "تحديد كمقروء",
+    "action_failed": "فشلت العملية",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "category": {
+      "account": "الحساب",
+      "refund": "الاسترداد",
+      "approval": "الموافقة",
+      "general": "عام"
+    },
+    "days": {
+      "monday": "الاثنين",
+      "tuesday": "الثلاثاء",
+      "wednesday": "الأربعاء",
+      "thursday": "الخميس",
+      "friday": "الجمعة",
+      "saturday": "السبت",
+      "sunday": "الأحد"
+    },
+    "months": {
+      "jan": "يناير",
+      "feb": "فبراير",
+      "mar": "مارس",
+      "apr": "أبريل",
+      "may": "مايو",
+      "jun": "يونيو",
+      "jul": "يوليو",
+      "aug": "أغسطس",
+      "sep": "سبتمبر",
+      "oct": "أكتوبر",
+      "nov": "نوفمبر",
+      "dec": "ديسمبر"
+    }
+  },
+  "approval_request": {
+    "title": "طلب الموافقة",
+    "family_members": "أفراد العائلة",
+    "provider": "مقدم الخدمة",
+    "note": "ملاحظة",
+    "attachments": "المرفقات",
+    "add_attachments": "إضافة مرفقات",
+    "select_family_member": "يرجى اختيار فرد من العائلة",
+    "select_provider": "اختر مقدم الخدمة",
+    "attachment_required": "مرفق واحد على الأقل مطلوب",
+    "max_size": "الحد الأقصى للحجم 5 ميجابايت",
+    "max_characters": "الحد الأقصى 300 حرف",
+    "search_providers_min_2_chars": "ابحث عن مقدمي الخدمة (الحد الأدنى حرفان)",
+    "enter_note": "أدخل ملاحظة",
+    "validation": {
+      "select_member": "يرجى اختيار فرد من العائلة",
+      "select_provider": "يرجى اختيار مقدم الخدمة",
+      "attachment_required": "مرفق واحد على الأقل مطلوب",
+      "notes_too_long": "الملاحظات لا يمكن أن تتجاوز 300 حرف"
+    },
+    "success": {
+      "title": "تم إرسال طلب الموافقة بنجاح",
+      "subtitle": "سنقوم بإشعارك بمجرد الموافقة على طلبك"
+    }
+  },
+  "approval_history": {
+    "title": "تاريخ الموافقات",
+    "filter": "تصفية",
+    "filter_by_member": "تصفية حسب العضو",
+    "tabs": {
+      "all": "الكل",
+      "pending": "معلق",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض"
+    },
+    "request_number": "رقم الطلب: ",
+    "date": "التاريخ: ",
+    "time": "الوقت: ",
+    "view_details": "عرض التفاصيل",
+    "empty_state": "ليس لديك أي طلبات اضغط على\nالزر ",
+    "to_request_approval": " لطلب الموافقة",
+    "approval_not_found": "طلب الموافقة غير موجود أو لم يعد متاحاً",
+    "cannot_open_pdf": "تعذر فتح ملف الموافقة",
+    "status": {
+      "approved": "موافق عليه",
+      "rejected": "مرفوض",
+      "pending": "معلق",
+      "reviewing": "قيد المراجعة"
+    }
+  },
+  "refund_request": {
+    "title": "طلب الاسترداد",
+    "family_members": "أفراد العائلة",
+    "refund_type": "نوع الاسترداد",
+    "provider": "مقدم الخدمة",
+    "reason": "السبب",
+    "amount": "المبلغ",
+    "amount_placeholder": "أدخل المبلغ",
+    "service_date": "تاريخ الخدمة",
+    "date": "التاريخ",
+    "select_date": "اختر التاريخ",
+    "note": "ملاحظة",
+    "attachments": "المرفقات",
+    "submit": "إرسال",
+    "success_message": "تم إرسال طلب الاسترداد بنجاح!",
+    "provider_hint": "أدخل اسم مقدم الخدمة",
+    "note_hint": "أضف أي ملاحظات إضافية هنا",
+    "validation": {
+      "select_member": "الرجاء اختيار فرد من العائلة",
+      "select_type": "الرجاء اختيار نوع الاسترداد",
+      "enter_provider": "الرجاء إدخال اسم مقدم الخدمة",
+      "select_reason": "الرجاء اختيار السبب",
+      "provider_min_length": "اسم مقدم الخدمة يجب ان يكون على الاقل 2 حروف",
+      "amount_range": "المبلغ يجب ان يكون بين 1 و 100000",
+      "enter_amount": "الرجاء إدخال المبلغ",
+      "select_date": "الرجاء اختيار تاريخ الخدمة",
+      "add_attachment": "الرجاء إضافة مرفق واحد على الأقل",
+      "future_date_not_allowed": "لا يمكن أن يكون تاريخ الفاتورة في المستقبل",
+      "date_too_old": "لا يمكن أن يكون تاريخ الفاتورة أقدم من 60 يوماً",
+      "invoice_attachment_required": "مرفق الفاتورة مطلوب",
+      "prescription_attachment_required": "مرفق الوصفة الطبية مطلوب",
+      "notes_too_long": "الملاحظات لا يمكن أن تتجاوز 300 حرف"
+    },
+    "success": {
+      "title": "تم إرسال طلب الاسترداد بنجاح",
+      "subtitle": "سنقوم بإشعارك بمجرد معالجة طلب الاسترداد الخاص بك"
+    }
+  },
+  "refund_history": {
+    "title": "تاريخ الاستردادات",
+    "filter": "تصفية",
+    "filter_by_member": "تصفية حسب العضو",
+    "tabs": {
+      "all": "الكل",
+      "pending": "معلق",
+      "approved": "موافق عليه",
+      "rejected": "مرفوض"
+    },
+    "request_number": "رقم الطلب: ",
+    "date": "التاريخ: ",
+    "time": "الوقت: ",
+    "amount": "المبلغ",
+    "view_details": "عرض التفاصيل",
+    "empty_state_title": "لا توجد طلبات استرداد بعد",
+    "empty_state": "ليس لديك أي طلبات اضغط على\nالزر ",
+    "to_request_refund": " لطلب الاسترداد",
+    "status": {
+      "approved": "موافق عليه",
+      "rejected": "مرفوض",
+      "pending": "معلق"
+    }
+  },
+  "family_members": {
+    "title": "أفراد العائلة",
+    "members": "الأعضاء",
+    "no_members": "لم يتم العثور على أفراد العائلة",
+    "activated_member": "عضو مفعل",
+    "inactive_member": "عضو غير مفعل",
+    "gold_plan": "الخطة الذهبية",
+    "add_member": "إضافة عضو",
+    "add_member_photo": "إضافة صورة العضو",
+    "full_name": "الاسم الكامل",
+    "national_id": "الرقم القومي",
+    "date_of_birth": "تاريخ الميلاد",
+    "relationship": "صلة القرابة",
+    "gender": "الجنس",
+    "cancel": "إلغاء",
+    "level": {
+      "head_of_family": "رب الأسرة",
+      "member": "عضو"
+    },
+    "platinum_vip": "بلاتينيوم-VIP",
+    "validation": {
+      "full_name_required": "الاسم الكامل مطلوب",
+      "national_id_required": "الرقم القومي مطلوب",
+      "national_id_length": "الرقم القومي يجب أن يكون 14 رقم",
+      "dob_required": "تاريخ الميلاد مطلوب",
+      "relationship_required": "صلة القرابة مطلوبة",
+      "gender_required": "الجنس مطلوب"
+    },
+    "relationships": {
+      "spouse": "زوج/زوجة",
+      "son": "ابن",
+      "daughter": "ابنة",
+      "parent": "والد/والدة"
+    },
+    "success_message": "تم إضافة فرد العائلة بنجاح!"
+  },
+  "chronic_medicines": {
+    "title": "الأدوية المزمنة",
+    "select_member": "اختر عضو العائلة",
+    "select_medicines": "اختر أدويتك الشهرية",
+    "upcoming_lab": "التحليل القادم",
+    "upload_lab_results": "رفع نتائج التحاليل الربعية",
+    "required_tests": "التحاليل المطلوبة:",
+    "blood_sugar_test": "تحليل السكر",
+    "blood_sugar_test_short": "تحليل السكر",
+    "kidney_function_test": "تحليل وظائف الكلى",
+    "kidney_test": "تقرير تحليل وظائف الكلى",
+    "kidney_test_short": "تحليل وظائف الكلى",
+    "test_description": "يجب أن يتضمن الاسم والتاريخ",
+    "saved": "تم الحفظ",
+    "upcoming_lab_title": "الفحوصات القادمة",
+    "upcoming_lab_subtitle": "الفحوصات التالية بعد شهرين",
+    "lab_test_due": "موعد التحليل",
+    "lab_test_message": "حان وقت التحاليل الربعية",
+    "tap_to_upload": "اضغط لرفع نتائج\n التحاليل",
+    "upload_button": "رفع نتائج التحاليل",
+    "action_required_title": "إجراء مطلوب: رفع نتائج التحاليل",
+    "action_required_message": "لمواصلة استلام أدويتك المزمنة، يرجى رفع جميع نتائج التحاليل المطلوبة."
+  },
+  "policy": {
+    "title": "السياسة",
+    "services": "الخدمات"
+  },
+  "insurance_plan": {
+    "title": "خطة التأمين",
+    "gold_health_plan": "الخطة الصحية الذهبية",
+    "policy_number": "رقم البوليصة #MED-2025-0123",
+    "valid_until": "صالح حتى",
+    "valid_date": "31 ديسمبر 2025",
+    "status": "الحالة",
+    "active": "نشط",
+    "coverage_details": "تفاصيل التغطية",
+    "coverage_type": "نوع التغطية",
+    "family_plan": "خطة عائلية",
+    "annual_limit": "الحد السنوي",
+    "annual_limit_value": "300,000 جنيه",
+    "deductible": "الخصم",
+    "deductible_value": "1,000 جنيه",
+    "copayment": "المشاركة في التكلفة",
+    "copayment_value": "20%",
+    "coverage_member": "عضو التغطية",
+    "main_member": "العضو الرئيسي",
+    "spouse": "الزوج/الزوجة",
+    "son": "الابن"
+  },
+  "terms_policy": {
+    "title": "الشرط وسياسة الخصوصية",
+    "terms": "الشرط",
+    "privacy_policy": "سياسة الخصوصية",
+    "last_updated": "آخر تحديث: 15 يناير 2025",
+    "medical_insurance_app": "تطبيق التأمين الطبي",
+    "sections": {
+      "introduction": "1. المقدمة",
+      "eligibility": "2. الأهلية وتسجيل الحساب",
+      "services": "3. الخدمات",
+      "contact_us": "اتصل بنا",
+      "info_collect": "2. المعلومات التي نجمعها",
+      "how_we_use": "3. كيفية استخدام معلوماتك",
+      "data_protection": "4. كيفية حماية بياناتك",
+      "questions": "هل لديك أي أسئلة؟"
+    }
+  },
+  "bottom_nav": {
+    "home": "الرئيسية",
+    "provider": "مقدمي الخدمة",
+    "request": "موافقة جديدة",
+    "profile": "الملف الشخصي"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "invalid_email": "عنوان بريد إلكتروني غير صحيح",
+    "invalid_phone": "رقم هاتف غير صحيح"
+  },
+  "messages": {
+    "success": "تمت العملية بنجاح",
+    "error": "حدث خطأ",
+    "no_internet": "لا يوجد اتصال بالإنترنت",
+    "server_error": "خطأ في السيرفر يرجى المحاولة لاحقاً"
+  },
+  "explore": {
+    "providers": "مزودي الخدمة",
+    "providers_description": "ابحث عن شبكات الرعاية الصحية والمستشفيات والصيدليات",
+    "policy": "بنود التغطيات",
+    "policy_description": "عرض وإدارة وثائق التأمين",
+    "family": "أفراد العائلة",
+    "family_description": "أضف وأدر أفراد العائلة"
+  },
+  "bottom_sheet": {
+    "choose_government": "اختر المحافظة",
+    "choose_city": "اختر المدينة",
+    "no_categories": "لا توجد فئات متاحة",
+    "no_governments": "لا توجد محافظات متاحة",
+    "no_cities": "لا توجد مدن متاحة",
+    "choose_family_member": "اختر عضو العائلة",
+    "all_members": "الكل",
+    "no_members": "لا يوجد أفراد عائلة متاحين",
+    "filter": "تصفية",
+    "clear": "مسح",
+    "choose_category": "اختر الفئة"
+  },
+  "tutorial": {
+    "family_members": {
+      "select": "اختر فرد العائلة الذي سيتم ربط الطلب به."
+    },
+    "refund_type": {
+      "select": "اختر نوع الاسترداد الذي تطلبه."
+    },
+    "provider": {
+      "select": "أدخل اسم مقدم الخدمة."
+    },
+    "reason": {
+      "select": "اختر سبب طلب الاسترداد."
+    },
+    "amount": {
+      "enter": "أدخل مبلغ الاسترداد (بين 1 و 100,000)."
+    },
+    "date": {
+      "select": "اختر تاريخ الخدمة (خلال آخر 60 يوماً)."
+    },
+    "note": {
+      "hint": "أضف ملاحظات توضيحية (اختياري بحد أقصى 300 حرف)."
+    },
+    "attachments": {
+      "hint": "أرفق كل المستندات والتقارير الطبية المطلوبة."
+    },
+    "submit": {
+      "tap": "راجع البيانات ثم اضغط إرسال لإرسال الطلب."
+    },
+    "save": {
+      "tap": "اضغط حفظ للاحتفاظ بآخر التعديلات."
+    },
+    "network": {
+      "categories": "تصفح الفئات لتصفية مقدمي الخدمة بسرعة.",
+      "search": "استخدم البحث أو الفلاتر للعثور على مقدم قريب منك.",
+      "navigate": "افتح الخرائط للتنقل إلى مقدم الخدمة.",
+      "call": "اضغط على رقم الهاتف للاتصال بمقدم الخدمة فوراً."
+    },
+    "profile": {
+      "personal_info": "اعرض وحدّث بياناتك الشخصية.",
+      "family_members": "أدر أفراد العائلة المشمولين بالتأمين.",
+      "change_password": "غيّر كلمة مرور حسابك بأمان.",
+      "language": "غيّر لغة التطبيق.",
+      "faq": "تصفح الأسئلة الشائعة.",
+      "contact_us": "تواصل مع فريق الدعم.",
+      "terms_privacy": "اقرأ الشروط وسياسة الخصوصية.",
+      "log_out": "سجّل الخروج من حسابك."
+    },
+    "approval_history": {
+      "swipe": "اسحب أو اضغط لتصفية طلبات الموافقة.",
+      "fab": "اضغط لإنشاء طلب موافقة جديد."
+    },
+    "refund_history": {
+      "swipe": "اسحب أو اضغط لتصفية طلبات الاسترداد.",
+      "fab": "اضغط لإنشاء طلب استرداد جديد."
+    }
+  },
+  "placeholders": {
+    "select_refund_type": "اختر نوع الاسترداد",
+    "select_refund_reason": "اختر السبب",
+    "select_service_date": "اختر التاريخ",
+    "enter_amount": "أدخل المبلغ",
+    "add_attachment": "أضف مرفق"
+  },
+  "add_attachment": {
+    "attachment": "مرفق",
+    "take_photo": "التقط صورة",
+    "upload_file": "رفع ملف",
+    "upload_e_invoice": "رفع الفاتورة الإلكترونية",
+    "upload_prescription": "رفع الوصفة الطبية",
+    "upload_refund_prescription": "رفع روشتة {type}",
+    "e_invoice_instructions": "يجب أن تتضمن الاسم، الرقم القومي، ورمز النشاط الضريبي",
+    "prescription_instructions": "يجب أن تتضمن الاسم والتاريخ"
+  },
+  "dialog": {
+    "coming_soon_title": "قريباً",
+    "coming_soon_message": "نعمل على تطوير هذه الميزة\nترقب التحديثات قريباً!",
+    "got_it": "فهمت"
+  },
+  "location_permission": {
+    "title": "السماح بالوصول إلى الموقع",
+    "message": "اسمح لتطبيق MCI Mobile بالوصول إلى موقعك للعثور بسرعة على الأطباء والمستشفيات والصيدليات في منطقتك.",
+    "enable_button": "تفعيل الوصول إلى الموقع",
+    "maybe_later": "ربما لاحقاً"
+  },
+  "form": {
+    "steps": {
+      "member": "العضو",
+      "provider": "مقدم الخدمة",
+      "type": "النوع",
+      "reason": "السبب",
+      "details": "التفاصيل",
+      "attachments": "الملفات",
+      "submit": "إرسال"
+    },
+    "draft": {
+      "restore_title": "استعادة المسودة؟",
+      "restore_message": "لديك مسودة محفوظة. هل تريد استعادتها؟",
+      "restore": "استعادة",
+      "discard": "تجاهل",
+      "saved": "تم حفظ المسودة"
+    },
+    "unsaved_changes": {
+      "title": "تغييرات غير محفوظة",
+      "message": "لديك تغييرات غير محفوظة. ماذا تريد أن تفعل؟",
+      "stay": "البقاء",
+      "save_draft": "حفظ المسودة",
+      "discard": "تجاهل"
+    },
+    "recent_providers": "مقدمو الخدمة الأخيرون",
+    "select_from_list": "يرجى الاختيار من قائمة مقدمي الخدمة"
+  },
+  "choose_service": {
+    "title": "اختر الخدمة",
+    "subtitle": "اختر كيف تريد المتابعة",
+    "greeting": "اختر خدمتك",
+    "info": "يمكنك تبديل الخدمات في أي وقت من الصفحة الرئيسية أو الملف الشخصي.",
+    "mediconsult": {
+      "title": "ميدي كونسلت",
+      "subtitle": "رفيقك الرقمي للتأمين",
+      "description": "إدارة الموافقات الطبية، طلب الاستردادات، واستكشاف مقدمي الخدمة في شبكتك – كل ذلك في مكان واحد.",
+      "badges": {
+        "approvals": "الموافقات",
+        "refunds": "الاستردادات",
+        "providers": "مقدمو الخدمة"
+      }
+    },
+    "medicard": {
+      "title": "ميدي كارد",
+      "subtitle": "بطاقة خصم للتوفير الحصري",
+      "description": "ميدي كارد هي بطاقة خصم تمنحك توفيرات حصرية لدى مقدمي الخدمة المشاركين.",
+      "badges": {
+        "discounts": "خصومات"
+      }
+    },
+    "khusm": {
+      "title": "خصم",
+      "subtitle": "عروض وصفقات الرعاية الصحية",
+      "description": "اكتشف عروض وخصومات الرعاية الصحية الحصرية. ستكون هذه الخدمة متاحة قريباً.",
+      "badges": {
+        "offers": "عروض",
+        "deals": "صفقات"
+      }
+    },
+    "coming_soon": "قريباً",
+    "continue": "متابعة"
+  },
+  "medicard_splash": {
+    "tagline": "صحتك، أولويتنا",
+    "powered_by": "بدعم من"
+  },
+  "medicard_registration": {
+    "title": "تفعيل ميدي كارد",
+    "card_title": "ميدي كارد",
+    "card_subtitle": "كارت الخصم",
+    "card_member_name": "اسم العضو",
+    "card_valid_thru": "صالح حتى",
+    "card_placeholder_name": "اسمك هنا",
+    "medicard_number": "رقم ميدي كارد",
+    "medicard_number_hint": "أدخل رقم ميدي كارد",
+    "first_name": "الاسم الأول",
+    "first_name_hint": "أدخل اسمك الأول",
+    "last_name": "اسم العائلة",
+    "last_name_hint": "أدخل اسم عائلتك",
+    "gender": "الجنس",
+    "gender_hint": "اختر جنسك",
+    "male": "ذكر",
+    "female": "أنثى",
+    "birthdate": "تاريخ الميلاد",
+    "birthdate_hint": "اختر تاريخ ميلادك",
+    "phone_number": "رقم الهاتف",
+    "phone_number_hint": "أدخل رقم هاتفك",
+    "email": "البريد الإلكتروني",
+    "email_hint": "أدخل عنوان بريدك الإلكتروني",
+    "national_id": "الرقم القومي",
+    "national_id_hint": "أدخل رقمك القومي",
+    "passport_number": "رقم جواز السفر",
+    "passport_number_hint": "أدخل رقم جواز السفر",
+    "password": "كلمة المرور",
+    "password_hint": "أدخل كلمة المرور",
+    "confirm_password": "تأكيد كلمة المرور",
+    "confirm_password_hint": "أدخل تأكيد كلمة المرور",
+    "profile_photo": "صورة الملف الشخصي",
+    "tap_to_upload": "اضغط لرفع الصورة",
+    "register_button": "تفعيل ميدي كارد",
+    "already_activated": "مفعّل بالفعل؟ ",
+    "login": "تسجيل الدخول",
+    "validation": {
+      "field_required": "هذا الحقل مطلوب",
+      "password_required": "كلمة المرور مطلوبة",
+      "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+      "confirm_password_required": "تأكيد كلمة المرور مطلوب",
+      "passwords_not_match": "كلمات المرور غير متطابقة",
+      "card_length": "رقم الكارد يجب أن يكون 12 رقم",
+      "card_numbers_only": "رقم الكارد يجب أن يحتوي على أرقام فقط"
+    }
+  },
+  "medicard_home": {
+    "title": "مقدمو خدمات ميدي كارد",
+    "subtitle": "خصومات حصرية لك",
+    "search_hint": "ابحث عن مقدمي الخدمة...",
+    "navigate": "التنقل",
+    "details": "التفاصيل",
+    "all_category": "الكل",
+    "pharmacy_category": "صيدلية",
+    "dental_category": "أسنان",
+    "lab_category": "معمل",
+    "optical_category": "نظارات",
+    "hospital_category": "مستشفى",
+    "no_personal_data": "لا توجد بيانات شخصية متاحة حالياً"
+  },
+  "medicard_support": {
+    "title": "الدعم الفني",
+    "subtitle": "تواصل معنا من خلال قنوات الدعم المتاحة",
+    "available_channels": "قنوات التواصل",
+    "digital_presence": "حساباتنا الرقمية",
+    "not_available": "لا توجد قنوات دعم متاحة حالياً",
+    "hotline": "الخط الساخن",
+    "email": "البريد الإلكتروني",
+    "whatsapp": "واتساب",
+    "website": "الموقع الإلكتروني",
+    "linkedin": "لينكد إن",
+    "instagram": "إنستجرام",
+    "facebook": "فيسبوك"
+  },
+  "medicard_selection": {
+    "title": "ميدي كارد",
+    "subtitle": "بطاقة الخصم الطبي رقم واحد في مصر",
+    "activate": {
+      "title": "تفعيل البطاقة",
+      "subtitle": "فعل بطاقتك الآن",
+      "description": "إذا كان لديك بطاقة جديدة، قم بتفعيلها الآن للاستمتاع بخدماتنا وخصوماتنا الحصرية."
+    },
+    "login": {
+      "title": "تسجيل الدخول",
+      "subtitle": "سجل دخولك لحسابك",
+      "description": "هل لديك حساب بالفعل؟ سجل دخولك لإدارة بطاقتك وعروضك بكل سهولة."
+    },
+    "buy": {
+      "title": "شراء ميدي كارد",
+      "subtitle": "ليس لديك بطاقة ميدي كارد؟",
+      "description": "احصل على بطاقتك الآن واستمتع بخصومات طبية حصرية في جميع أنحاء مصر.",
+      "dialog_title": "طلب بطاقة ميدي كارد",
+      "dialog_subtitle": "تواصل معنا من خلال القنوات التالية لطلب بطاقتك الآن",
+      "hotline": "الخط الساخن",
+      "whatsapp": "واتساب",
+      "website": "الموقع الإلكتروني",
+      "email": "البريد الإلكتروني"
+    }
+  },
+  "medicard_edit_profile": {
+    "title": "تعديل الملف الشخصي",
+    "first_name": "الاسم الأول",
+    "last_name": "الاسم الأخير",
+    "phone": "رقم الهاتف",
+    "email": "البريد الإلكتروني",
+    "national_id": "الرقم القومي",
+    "passport": "رقم جواز السفر",
+    "birthdate": "تاريخ الميلاد",
+    "gender": "الجنس",
+    "male": "ذكر",
+    "female": "أنثى",
+    "save": "حفظ",
+    "profile_photo": "صورة الملف الشخصي",
+    "success": "تم تحديث الملف الشخصي بنجاح"
+  }
+}
