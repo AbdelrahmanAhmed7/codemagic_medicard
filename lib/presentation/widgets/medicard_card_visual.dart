@@ -215,9 +215,10 @@ class _MediCardVisualContent extends StatelessWidget {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8.r),
                         ),
-                        child: Image.asset(
-                          AppAssets.qrCode,
-                          fit: BoxFit.contain,
+                        child: Icon(
+                          Icons.qr_code_2_rounded,
+                          size: 48.sp,
+                          color: const Color(0xFF1E3A8A),
                         ),
                       ),
                       SizedBox(width: 12.w),

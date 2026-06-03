@@ -21,6 +21,7 @@ import '../../repository/medicard_repository_impl.dart';
 import '../../service/medicard_api_service.dart';
 import '../network/dio_factory.dart';
 import '../services/location_service.dart';
+import '../services/url_launcher_service.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -41,6 +42,7 @@ Future<void> setupServiceLocator() async {
     () => MedicardNetworkRepository(sl()),
   );
   sl.registerLazySingleton<LocationService>(() => LocationService());
+  sl.registerLazySingleton<UrlLauncherService>(() => UrlLauncherService());
 
   // UseCases
   sl.registerFactory<ActivateCardUseCase>(() => ActivateCardUseCase(sl()));

@@ -139,7 +139,7 @@ class _MediCardLoginScreenState extends State<MediCardLoginScreen> {
                       AppTextField(
                         controller: _medicardNumberController,
                         hintText: 'auth.login.medicard_number_placeholder'.tr(),
-                        prefixImagePath: AppAssets.cardIcon,
+                        prefixIcon: Icons.credit_card_rounded,
                         keyboardType: TextInputType.phone,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -160,7 +160,7 @@ class _MediCardLoginScreenState extends State<MediCardLoginScreen> {
                         controller: _passwordController,
                         hintText: 'auth.login.password_placeholder'.tr(),
                         isPassword: true,
-                        prefixImagePath: AppAssets.passwordIcon,
+                        prefixIcon: Icons.lock_outline_rounded,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'auth.login.validation.password_required'

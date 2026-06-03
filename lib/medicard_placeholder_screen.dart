@@ -33,7 +33,7 @@ class MediCardPlaceholderScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                AppAssets.logo,
+                AppAssets.mediLogo,
                 width: 140.w,
                 height: 140.w,
                 fit: BoxFit.contain,

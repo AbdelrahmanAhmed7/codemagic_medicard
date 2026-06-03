@@ -9,7 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:medicard/presentation/widgets/medicard_card_visual.dart';
 
-import '../core/constants/app_assets.dart';
+import '../presentation/widgets/legal_links_row.dart';
 import '../core/theming/app_colors.dart';
 import '../core/theming/app_toast.dart';
 import '../core/theming/app_text_styles.dart';
@@ -86,7 +86,10 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
           success: (response) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
-                context.go('/medicard-login');
+                final cardNo = LanguageHelper.convertArabicToEnglishNumerals(
+                  _medicardNumberController.text.trim(),
+                );
+                context.go('/medicard-home?cardNo=$cardNo');
               }
             });
           },
@@ -146,7 +149,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
               _buildTextField(
                 label: 'medicard_registration.medicard_number'.tr(), 
                 hint: 'medicard_registration.medicard_number_hint'.tr(), 
-                prefixIcon: AppAssets.cardIcon, 
+                icon: Icons.credit_card_rounded,
                 isRequired: true,
                 keyboardType: TextInputType.number,
                 controller: _medicardNumberController,
@@ -210,7 +213,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
                   _buildTextField(
                     label: 'medicard_registration.national_id'.tr(),
                     hint: 'medicard_registration.national_id_hint'.tr(),
-                    prefixIcon: AppAssets.idIcon,
+                    icon: Icons.badge_outlined,
                     keyboardType: TextInputType.number,
                     isRequired: false,
                     controller: _nationalIdController,
@@ -224,7 +227,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
               _buildTextField(
                 label: 'medicard_registration.passport_number'.tr(), 
                 hint: 'medicard_registration.passport_number_hint'.tr(), 
-                prefixIcon: AppAssets.idIcon,
+                icon: Icons.flight_takeoff_rounded,
                 isRequired: false,
                 controller: _passportController,
               ),
@@ -239,7 +242,9 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
               // Profile Photo (Optional)
               _buildPhotoPicker(),
 
-              SizedBox(height: 32.h),
+              SizedBox(height: 16.h),
+              const LegalLinksRow(showAgreementHint: true),
+              SizedBox(height: 24.h),
               AppButton(
                 text: 'medicard_registration.register_button'.tr(),
                 useGradient: true,
@@ -287,7 +292,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
                       passportNumber: passportNumber,
                       email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
                       isMale: _selectedGender == 'Male',
-                      profileImage: null, // TODO: Handle image upload
+                      profileImage: _pickedImage?.path,
                       lang: lang,
                     );
                   } else {
@@ -335,7 +340,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
   Widget _buildTextField({
     required String label,
     required String hint,
-    String? prefixIcon,
+    IconData? icon,
     TextInputType keyboardType = TextInputType.text,
     bool isRequired = true,
     TextEditingController? controller,
@@ -359,7 +364,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
         SizedBox(height: 8.h),
         AppTextField(
           hintText: hint,
-          prefixImagePath: prefixIcon,
+          prefixIcon: icon,
           keyboardType: keyboardType,
           controller: controller,
           onChanged: onChanged,
@@ -654,7 +659,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
         AppTextField(
           controller: _passwordController,
           hintText: 'medicard_registration.password_hint'.tr(),
-          prefixImagePath: AppAssets.passwordIcon,
+          prefixIcon: Icons.lock_outline_rounded,
           isPassword: true,
           validator: (value) {
             if (value?.isEmpty ?? true) {
@@ -685,7 +690,7 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
         AppTextField(
           controller: _confirmPasswordController,
           hintText: 'medicard_registration.confirm_password_hint'.tr(),
-          prefixImagePath: AppAssets.passwordIcon,
+          prefixIcon: Icons.lock_outline_rounded,
           isPassword: true,
           validator: (value) {
             if (value?.isEmpty ?? true) {

@@ -7,8 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
+import '../core/constants/legal_urls.dart';
+import '../core/di/service_locator.dart';
 import '../core/helpers/shared_pref_helper.dart';
+import '../core/services/url_launcher_service.dart';
 import '../core/theming/app_text_styles.dart';
+import 'widgets/legal_links_row.dart';
 import '../data/card_personal_info_response_model.dart';
 import 'logic/medicard_home_cubit.dart';
 import 'logic/medicard_home_state.dart';
@@ -143,7 +147,11 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                   _buildMediCard(_currentData), // Updated to the premium design
                   SizedBox(height: 12.h),
                   _buildProfileSection(context, _currentData),
-                  SizedBox(height: 32.h),
+                  SizedBox(height: 24.h),
+                  const LegalLinksRow(),
+                  SizedBox(height: 24.h),
+                  _buildDeleteAccountButton(context),
+                  SizedBox(height: 16.h),
                   _buildLogoutButton(context),
                   SizedBox(height: 24.h),
                 ],
@@ -561,6 +569,105 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
     );
   }
 
+  Widget _buildDeleteAccountButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showDeleteAccountDialog(context),
+        icon: const Icon(Icons.delete_forever_outlined, color: Color(0xFFB91C1C)),
+        label: Text(
+          'account_deletion.title'.tr(),
+          style: AppTextStyles.font16BlackMedium(context).copyWith(
+            color: const Color(0xFFB91C1C),
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          side: const BorderSide(color: Color(0xFFFECACA)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14.r),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    final launcher = sl<UrlLauncherService>();
+    const email = LegalUrls.accountDeletionEmail;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.email_outlined,
+                color: const Color(0xFF1E3A8A),
+                size: 40.sp,
+              ),
+              SizedBox(height: 16.h),
+              Text(
+                'account_deletion.contact_title'.tr(),
+                style: AppTextStyles.font18BlackSemiBold(context),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'account_deletion.contact_message'.tr(),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.font14GreyRegular(context).copyWith(
+                  color: const Color(0xFF64748B),
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    launcher.launchEmail(
+                      email,
+                      subject: 'MediCard account deletion request',
+                      body:
+                          'Please delete my MediCard account.\nCard number: ${widget.cardNo}',
+                    );
+                  },
+                  icon: const Icon(Icons.mail_outline, color: Colors.white),
+                  label: Text(
+                    'account_deletion.send_email'.tr(),
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E3A8A),
+                    padding: EdgeInsets.symmetric(vertical: 14.h),
+                  ),
+                ),
+              ),
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('common.cancel'.tr()),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _clearLocalSession() async {
+    await SharedPrefHelper.removeData(SharedPrefKeys.medicardCardNo);
+    await SharedPrefHelper.clearAllSecuredData();
+  }
+
   Widget _buildLogoutButton(BuildContext context) {
     return Container(
       width: double.infinity,
@@ -659,11 +766,8 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () async {
-                          // ✅ مسح الـ session قبل الخروج
-                          await SharedPrefHelper.removeData(
-                            SharedPrefKeys.medicardCardNo,
-                          );
-                          if (context.mounted) context.go('/medicard-login');
+                          await _clearLocalSession();
+                          if (context.mounted) context.go('/medicard');
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFE5484D),

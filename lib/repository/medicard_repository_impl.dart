@@ -26,6 +26,19 @@ class MedicardRepositoryImpl implements MedicardRepository {
     String lang,
   ) async {
     try {
+      MultipartFile? imagePart;
+      if (request.profileImage != null &&
+          request.profileImage!.isNotEmpty &&
+          !request.profileImage!.startsWith('http')) {
+        final file = File(request.profileImage!);
+        if (await file.exists()) {
+          imagePart = await MultipartFile.fromFile(
+            file.path,
+            filename: file.path.split('/').last,
+          );
+        }
+      }
+
       final response = await _apiService.activateCard(
         lang,
         request.cardNo,
@@ -39,7 +52,7 @@ class MedicardRepositoryImpl implements MedicardRepository {
         request.passportNumber,
         request.email,
         request.isMale,
-        request.profileImage,
+        imagePart,
       );
 
       return response.success
@@ -192,4 +205,5 @@ class MedicardRepositoryImpl implements MedicardRepository {
       return ApiResult.failure(ErrorHandler.handle(error));
     }
   }
+
 }

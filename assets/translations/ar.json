@@ -639,7 +639,7 @@
     "terms": "الشرط",
     "privacy_policy": "سياسة الخصوصية",
     "last_updated": "آخر تحديث: 15 يناير 2025",
-    "medical_insurance_app": "تطبيق التأمين الطبي",
+    "medical_insurance_app": "تطبيق بطاقة ميدي كارد للخصومات",
     "sections": {
       "introduction": "1. المقدمة",
       "eligibility": "2. الأهلية وتسجيل الحساب",
@@ -953,5 +953,15 @@
     "save": "حفظ",
     "profile_photo": "صورة الملف الشخصي",
     "success": "تم تحديث الملف الشخصي بنجاح"
+  },
+  "legal": {
+    "privacy_policy": "سياسة الخصوصية",
+    "agreement_hint": "بالتفعيل، فإنك توافق على سياسة الخصوصية."
+  },
+  "account_deletion": {
+    "title": "حذف الحساب",
+    "contact_title": "حذف الحساب",
+    "contact_message": "لحذف حسابك، يرجى التواصل معنا على info@medicardeg.com",
+    "send_email": "إرسال بريد إلكتروني"
   }
 }

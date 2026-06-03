@@ -645,7 +645,7 @@
     "terms": "Terms",
     "privacy_policy": "Privacy Policy",
     "last_updated": "Last updated: January 15, 2025",
-    "medical_insurance_app": "Medical Insurance App",
+    "medical_insurance_app": "MediCard Discount App",
     "sections": {
       "introduction": "1. Introduction",
       "eligibility": "2. Eligibility & Account Registration",
@@ -678,7 +678,7 @@
     "providers": "Providers",
     "providers_description": "Find healthcare networks, hospitals and pharmacies",
     "policy": "Policy",
-    "policy_description": "View & manage insurance policies",
+    "policy_description": "View discount benefits and participating providers",
     "family": "Family",
     "family_description": "Add & manage family members"
   },
@@ -813,7 +813,7 @@
     "info": "You can switch services anytime from Home or Profile.",
     "mediconsult": {
       "title": "MediConsult",
-      "subtitle": "Your digital insurance companion",
+      "subtitle": "Your digital MediCard companion",
       "description": "Manage your medical approvals, request refunds, and explore in-network providers — all in one place.",
       "badges": {
         "approvals": "Approvals",
@@ -959,5 +959,15 @@
     "save": "Save",
     "profile_photo": "Profile Photo",
     "success": "Profile updated successfully"
+  },
+  "legal": {
+    "privacy_policy": "Privacy Policy",
+    "agreement_hint": "By activating, you agree to our Privacy Policy."
+  },
+  "account_deletion": {
+    "title": "Delete Account",
+    "contact_title": "Delete Account",
+    "contact_message": "To delete your account, please contact us at info@medicardeg.com",
+    "send_email": "Send Email"
   }
 }

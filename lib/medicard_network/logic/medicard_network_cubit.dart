@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/constants/api_result.dart';
@@ -81,9 +80,15 @@ class MedicardNetworkLoaded extends MedicardNetworkState {
       providers: providers ?? this.providers,
       governments: governments ?? this.governments,
       cities: cities ?? this.cities,
-      selectedCategoryId: resetCategory ? null : (selectedCategoryId ?? this.selectedCategoryId),
-      selectedGovernmentId: resetGovernment ? null : (selectedGovernmentId ?? this.selectedGovernmentId),
-      selectedCityId: resetCity ? null : (selectedCityId ?? this.selectedCityId),
+      selectedCategoryId: resetCategory
+          ? null
+          : (selectedCategoryId ?? this.selectedCategoryId),
+      selectedGovernmentId: resetGovernment
+          ? null
+          : (selectedGovernmentId ?? this.selectedGovernmentId),
+      selectedCityId: resetCity
+          ? null
+          : (selectedCityId ?? this.selectedCityId),
       searchKey: resetSearch ? null : (searchKey ?? this.searchKey),
       orderByDiscounts: orderByDiscounts ?? this.orderByDiscounts,
       hasMore: hasMore ?? this.hasMore,
@@ -136,16 +141,18 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
       failure: (_) {},
     );
 
-    emit(MedicardNetworkLoaded(
-      categories: categories,
-      providers: [],
-      governments: governments,
-      cities: [],
-      latitude: latitude,
-      longitude: longitude,
-      locationStatus: locationStatus,
-      searchKey: initialSearchQuery,
-    ));
+    emit(
+      MedicardNetworkLoaded(
+        categories: categories,
+        providers: [],
+        governments: governments,
+        cities: [],
+        latitude: latitude,
+        longitude: longitude,
+        locationStatus: locationStatus,
+        searchKey: initialSearchQuery,
+      ),
+    );
 
     _searchProviders(lang);
   }
@@ -172,10 +179,14 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
 
     // ── debug only ─────────────────────────────────────────────────────────
     if (kDebugMode) {
-      debugPrint('🔍 _searchProviders → lat=$latitude, lng=$longitude, search=$searchKey');
+      debugPrint(
+        '🔍 _searchProviders → lat=$latitude, lng=$longitude, search=$searchKey',
+      );
     }
 
-    final cardNo = await SharedPrefHelper.getString(SharedPrefKeys.medicardCardNo);
+    final cardNo = await SharedPrefHelper.getString(
+      SharedPrefKeys.medicardCardNo,
+    );
 
     if (currentState is MedicardNetworkLoaded) {
       emit(currentState.copyWith(isLoading: true));
@@ -203,7 +214,10 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
 
         if (response.data != null) {
           if (latestState is MedicardNetworkLoaded && _currentPage > 1) {
-            allProviders = [...latestState.providers, ...response.data!.providers];
+            allProviders = [
+              ...latestState.providers,
+              ...response.data!.providers,
+            ];
           } else {
             allProviders = response.data!.providers;
           }
@@ -211,24 +225,26 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
         }
 
         if (latestState is MedicardNetworkLoaded) {
-          emit(latestState.copyWith(
-            providers: allProviders,
-            hasMore: hasMore,
-            isLocationLoading: false,
-            isLoading: false, // Done loading
-            // Pass actual values and explicitly reset if they are null
-            selectedCategoryId: categoryId,
-            resetCategory: categoryId == null,
-            selectedGovernmentId: governmentId,
-            resetGovernment: governmentId == null,
-            selectedCityId: cityId,
-            resetCity: cityId == null,
-            searchKey: searchKey,
-            resetSearch: searchKey == null || searchKey.isEmpty,
-            orderByDiscounts: orderByDiscounts,
-            latitude: latitude,
-            longitude: longitude,
-          ));
+          emit(
+            latestState.copyWith(
+              providers: allProviders,
+              hasMore: hasMore,
+              isLocationLoading: false,
+              isLoading: false, // Done loading
+              // Pass actual values and explicitly reset if they are null
+              selectedCategoryId: categoryId,
+              resetCategory: categoryId == null,
+              selectedGovernmentId: governmentId,
+              resetGovernment: governmentId == null,
+              selectedCityId: cityId,
+              resetCity: cityId == null,
+              searchKey: searchKey,
+              resetSearch: searchKey == null || searchKey.isEmpty,
+              orderByDiscounts: orderByDiscounts,
+              latitude: latitude,
+              longitude: longitude,
+            ),
+          );
         }
       },
       failure: (message) {
@@ -246,12 +262,14 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     final currentState = state;
     if (currentState is MedicardNetworkLoaded) {
       _currentPage = 1;
-      emit(currentState.copyWith(
-        selectedCategoryId: categoryId,
-        resetCategory: categoryId == null,
-        providers: [],
-        isLoading: true, // Start loading
-      ));
+      emit(
+        currentState.copyWith(
+          selectedCategoryId: categoryId,
+          resetCategory: categoryId == null,
+          providers: [],
+          isLoading: true, // Start loading
+        ),
+      );
       _searchProviders(lang);
     }
   }
@@ -262,26 +280,32 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
       _currentPage = 1;
 
       // Update state immediately: reset gov/city and clear results
-      emit(currentState.copyWith(
-        selectedGovernmentId: governmentId,
-        resetGovernment: governmentId == null,
-        resetCity: true,
-        cities: [],
-        providers: [],
-        isLoading: true, // Start loading
-      ));
+      emit(
+        currentState.copyWith(
+          selectedGovernmentId: governmentId,
+          resetGovernment: governmentId == null,
+          resetCity: true,
+          cities: [],
+          providers: [],
+          isLoading: true, // Start loading
+        ),
+      );
 
       // Trigger search immediately with the new government
       _searchProviders(lang);
 
       // Async fetch cities for the dropdown
       if (governmentId != null) {
-        final citiesResult = await _repository.getCitiesByGovernment(lang, governmentId);
+        final citiesResult = await _repository.getCitiesByGovernment(
+          lang,
+          governmentId,
+        );
         citiesResult.when(
           success: (response) {
             // Check if we haven't changed government again during the call
             final latestState = state;
-            if (latestState is MedicardNetworkLoaded && latestState.selectedGovernmentId == governmentId) {
+            if (latestState is MedicardNetworkLoaded &&
+                latestState.selectedGovernmentId == governmentId) {
               emit(latestState.copyWith(cities: response.data?.cities ?? []));
             }
           },
@@ -295,12 +319,14 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     final currentState = state;
     if (currentState is MedicardNetworkLoaded) {
       _currentPage = 1;
-      emit(currentState.copyWith(
-        selectedCityId: cityId,
-        resetCity: cityId == null,
-        providers: [],
-        isLoading: true, // Start loading
-      ));
+      emit(
+        currentState.copyWith(
+          selectedCityId: cityId,
+          resetCity: cityId == null,
+          providers: [],
+          isLoading: true, // Start loading
+        ),
+      );
       _searchProviders(lang);
     }
   }
@@ -309,12 +335,14 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     final currentState = state;
     if (currentState is MedicardNetworkLoaded) {
       _currentPage = 1;
-      emit(currentState.copyWith(
-        searchKey: searchKey,
-        resetSearch: searchKey == null || searchKey.isEmpty,
-        providers: [],
-        isLoading: true, // Start loading
-      ));
+      emit(
+        currentState.copyWith(
+          searchKey: searchKey,
+          resetSearch: searchKey == null || searchKey.isEmpty,
+          providers: [],
+          isLoading: true, // Start loading
+        ),
+      );
       _searchProviders(lang);
     }
   }
@@ -331,15 +359,17 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     final currentState = state;
     if (currentState is MedicardNetworkLoaded) {
       _currentPage = 1;
-      emit(currentState.copyWith(
-        resetCategory: true,
-        resetGovernment: true,
-        resetCity: true,
-        resetSearch: true,
-        cities: [],
-        providers: [],
-        isLoading: true, // Start loading
-      ));
+      emit(
+        currentState.copyWith(
+          resetCategory: true,
+          resetGovernment: true,
+          resetCity: true,
+          resetSearch: true,
+          cities: [],
+          providers: [],
+          isLoading: true, // Start loading
+        ),
+      );
       _searchProviders(lang);
     }
   }
@@ -348,11 +378,13 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     final currentState = state;
     if (currentState is MedicardNetworkLoaded) {
       _currentPage = 1;
-      emit(currentState.copyWith(
-        orderByDiscounts: !currentState.orderByDiscounts,
-        providers: [],
-        isLoading: true,
-      ));
+      emit(
+        currentState.copyWith(
+          orderByDiscounts: !currentState.orderByDiscounts,
+          providers: [],
+          isLoading: true,
+        ),
+      );
       _searchProviders(lang);
     }
   }
@@ -373,14 +405,16 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
       }
 
       _currentPage = 1;
-      emit(currentState.copyWith(
-        latitude: latitude,
-        longitude: longitude,
-        locationStatus: locationStatus,
-        providers: [],
-        isLoading: true,
-        isLocationLoading: false,
-      ));
+      emit(
+        currentState.copyWith(
+          latitude: latitude,
+          longitude: longitude,
+          locationStatus: locationStatus,
+          providers: [],
+          isLoading: true,
+          isLocationLoading: false,
+        ),
+      );
       _searchProviders(lang);
     } else {
       loadInitialData(
@@ -406,9 +440,8 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
       return;
     }
 
-    emit(currentState.copyWith(
-      resetLocation: true,
-      locationStatus: result.status,
-    ));
+    emit(
+      currentState.copyWith(resetLocation: true, locationStatus: result.status),
+    );
   }
 }

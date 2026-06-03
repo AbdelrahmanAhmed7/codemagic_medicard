@@ -35,7 +35,7 @@ class _MedicardApiService implements MedicardApiService {
     String? passportNumber,
     String? email,
     bool isMale,
-    String? profileImage,
+    MultipartFile? profileImage,
   ) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
@@ -60,7 +60,7 @@ class _MedicardApiService implements MedicardApiService {
     }
     _data.fields.add(MapEntry('IsMale', isMale.toString()));
     if (profileImage != null) {
-      _data.fields.add(MapEntry('ProfileImage', profileImage));
+      _data.files.add(MapEntry('ProfileImage', profileImage));
     }
     final _options = _setStreamType<CardActivateResponseModel>(
       Options(

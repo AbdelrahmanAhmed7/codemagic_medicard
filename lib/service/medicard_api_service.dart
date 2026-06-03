@@ -29,7 +29,7 @@ abstract class MedicardApiService {
     @Part(name: "PassportNumber") String? passportNumber,
     @Part(name: "Email") String? email,
     @Part(name: "IsMale") bool isMale,
-    @Part(name: "ProfileImage") String? profileImage,
+    @Part(name: "ProfileImage") MultipartFile? profileImage,
   );
 
   @POST("{lang}/Auth/Login")
