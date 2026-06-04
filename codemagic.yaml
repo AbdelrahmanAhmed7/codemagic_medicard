@@ -1,7 +1,8 @@
-# MediCard — Codemagic (use THIS file only; disable Workflow Editor workflow)
-# https://docs.codemagic.io/troubleshooting/common-ios-issues/#scheme-xxx-not-found-from-repository-please-reconfigure-your-project
-#
-# In Codemagic: App settings → enable "codemagic.yaml" / disable duplicate Workflow Editor build.
+# MediCard — Codemagic iOS
+# Prerequisites in Codemagic UI:
+#   Settings → Code signing identities → iOS certificate + App Store provisioning profile
+#   for bundle id: com.khusm.medicard
+#   OR connect App Store Connect API key for automatic signing.
 
 workflows:
   medicard-ios:
@@ -13,6 +14,9 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.khusm.medicard
       vars:
         CM_FLUTTER_SCHEME: Runner
         XCODE_WORKSPACE: ios/Runner.xcworkspace
@@ -20,22 +24,26 @@ workflows:
         BUNDLE_ID: com.khusm.medicard
 
     scripts:
-      # Runs before any automatic "Installing dependencies" / scheme scan
-      - name: Post-clone setup (required for Runner scheme)
+      - name: Post-clone setup
         script: |
           set -e
           flutter pub get
           cd ios && pod install && cd ..
-          echo "=== Available schemes ==="
-          xcodebuild -list -workspace ios/Runner.xcworkspace | grep -A 20 "Schemes:"
 
-      # Code signing: configure in Codemagic UI (Teams → Code signing identities)
-      # or add ios_signing / xcode-project use-profiles when certificates are ready.
+      - name: Set up code signing on Xcode project
+        script: |
+          set -e
+          xcode-project use-profiles
+
       - name: Build IPA
         script: |
           set -e
-          flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist
+          EXPORT_PLIST="${HOME}/export_options.plist"
+          if [ ! -f "$EXPORT_PLIST" ]; then
+            EXPORT_PLIST="$CM_BUILD_DIR/ios/export_options.plist"
+          fi
+          echo "Using export options: $EXPORT_PLIST"
+          flutter build ipa --release --export-options-plist="$EXPORT_PLIST"
 
     artifacts:
       - build/ios/ipa/*.ipa
