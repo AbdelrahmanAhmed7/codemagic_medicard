@@ -1,0 +1,48 @@
+# MediCard — Codemagic iOS build
+# Docs: https://docs.codemagic.io/yaml-basic-configuration/yaml-getting-started/
+#
+# Configure code signing in Codemagic UI (Team settings → iOS certificates)
+# or replace ios_signing below with your certificate reference.
+
+workflows:
+  medicard-ios:
+    name: MediCard iOS
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.khusm.medicard
+      vars:
+        # Used by Codemagic Flutter integration
+        XCODE_WORKSPACE: ios/Runner.xcworkspace
+        XCODE_SCHEME: Runner
+        BUNDLE_ID: com.khusm.medicard
+
+    scripts:
+      # Must run BEFORE dependency install / xcodebuild — fixes "Scheme not found"
+      - name: Generate Flutter iOS project files
+        script: |
+          flutter pub get
+          cd ios && pod install
+
+      - name: Flutter build IPA
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=$HOME/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - info@medicardeg.com
+        notify:
+          success: true
+          failure: true

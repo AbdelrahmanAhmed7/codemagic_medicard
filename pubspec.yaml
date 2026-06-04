@@ -2,7 +2,7 @@ name: medicard
 description: "MediCard - Your digital medical card for managing health insurance and medical services."
 publish_to: 'none'
 
-version: 1.0.0+2s
+version: 1.0.0+2
 
 environment:
   sdk: ^3.10.7
