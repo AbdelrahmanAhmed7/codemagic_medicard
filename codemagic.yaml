@@ -1,15 +1,9 @@
 # MediCard — Codemagic iOS
-# Prerequisites in Codemagic UI:
-#   Settings → Code signing identities → iOS certificate + App Store provisioning profile
-#   for bundle id: com.khusm.medicard
-#   OR connect App Store Connect API key for automatic signing.
-
 workflows:
   medicard-ios:
     name: MediCard iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
-
     environment:
       flutter: stable
       xcode: latest
@@ -17,38 +11,23 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.khusm.medicard
-      vars:
-        CM_FLUTTER_SCHEME: Runner
-        XCODE_WORKSPACE: ios/Runner.xcworkspace
-        XCODE_SCHEME: Runner
-        BUNDLE_ID: com.khusm.medicard
-
     scripts:
       - name: Post-clone setup
         script: |
           set -e
           flutter pub get
           cd ios && pod install && cd ..
-
-      - name: Set up code signing on Xcode project
+      - name: Set up code signing
         script: |
           set -e
           xcode-project use-profiles
-
       - name: Build IPA
         script: |
           set -e
-          EXPORT_PLIST="${HOME}/export_options.plist"
-          if [ ! -f "$EXPORT_PLIST" ]; then
-            EXPORT_PLIST="$CM_BUILD_DIR/ios/export_options.plist"
-          fi
-          echo "Using export options: $EXPORT_PLIST"
-          flutter build ipa --release --export-options-plist="$EXPORT_PLIST"
-
+          flutter build ipa --release --export-method app-store
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
-
     publishing:
       email:
         recipients:
