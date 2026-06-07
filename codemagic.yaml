@@ -11,6 +11,8 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.khusm.medicard
+        provisioning_profile: medicard_app_store
+        certificate: medicard_app_store
     scripts:
       - name: Post-clone setup
         script: |
