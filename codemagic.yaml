@@ -4,6 +4,8 @@ workflows:
     name: MediCard iOS
     max_build_duration: 120
     instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: code magic
     environment:
       flutter: stable
       xcode: latest
