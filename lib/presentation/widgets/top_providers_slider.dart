@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../../core/constants/app_assets.dart';
 import '../../network/data/top_providers_slider_model.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class TopProvidersSlider extends StatefulWidget {
   final List<SliderProvider> providers;
@@ -106,20 +108,19 @@ class _TopProvidersSliderState extends State<TopProvidersSlider> {
 
         // ── Scrollable logos row ────────────────────────────────────────────
         SizedBox(
-          height: 160.h, // 64 logo + 8 gap + (10.sp * 1.3 * 3 lines) + padding
+          height: 64.r + 8.h + (10.sp * 1.3 * 3) + 8.h,
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             padding: EdgeInsets.symmetric(horizontal: 16.w),
             itemCount: widget.providers.length,
-            itemBuilder: (context, index) =>
-                _ProviderBubble(
-                  provider: widget.providers[index],
-                  onTap: widget.onProviderTap != null
-                      ? () => widget.onProviderTap!(widget.providers[index].name)
-                      : null,
-                ),
+            itemBuilder: (context, index) => _ProviderBubble(
+              provider: widget.providers[index],
+              onTap: widget.onProviderTap != null
+                  ? () => widget.onProviderTap!(widget.providers[index].name)
+                  : null,
+            ),
           ),
         ),
       ],
@@ -213,8 +214,8 @@ class _CircleLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 64.w,
-      height: 64.w,
+      width: 64.r,
+      height: 64.r,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
@@ -244,10 +245,8 @@ class _CircleLogo extends StatelessWidget {
     );
   }
 
-  Widget _fallbackIcon() => Image.asset(
-    AppAssets.mediLogo,
-    fit: BoxFit.contain,
-  );
+  Widget _fallbackIcon() =>
+      Image.asset(AppAssets.mediLogo, fit: BoxFit.contain);
 
   Widget _shimmerCircle() => const _ShimmerBox(
     width: double.infinity,

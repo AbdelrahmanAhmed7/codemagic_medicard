@@ -7,6 +7,7 @@ import 'core/di/service_locator.dart';
 import 'core/network/connectivity_service.dart';
 import 'core/routing/app_router.dart';
 import 'core/theming/font_manager.dart';
+import 'core/utils/responsive_screen_util.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,9 +60,19 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812),
-      minTextAdapt: true,
-      splitScreenMode: true,
+      designSize: ResponsiveScreenUtil.phoneDesignSize,
+      minTextAdapt: false,
+      splitScreenMode: false,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        ScreenUtil.configure(
+          data: mediaQuery,
+          designSize: ResponsiveScreenUtil.adaptiveDesignSize(mediaQuery.size),
+          minTextAdapt: false,
+          splitScreenMode: false,
+        );
+        return child!;
+      },
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         routerConfig: _router,

@@ -69,7 +69,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   /// فتح تفاصيل provider مباشرة بالـ providerId
   Future<void> _openProviderDetails(SliderProvider sliderProvider) async {
     final lang = context.locale.languageCode;
-    final cardNo = await SharedPrefHelper.getString(SharedPrefKeys.medicardCardNo);
+    final cardNo = await SharedPrefHelper.getString(
+      SharedPrefKeys.medicardCardNo,
+    );
     final repo = sl<MedicardNetworkRepository>();
 
     // show loading
@@ -95,8 +97,12 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       success: (response) {
         final providers = response.data?.providers ?? [];
         // ابحث عن provider بنفس الـ providerId
-        final match = providers.where((p) => p.providerId == sliderProvider.providerId).toList();
-        final target = match.isNotEmpty ? match.first : (providers.isNotEmpty ? providers.first : null);
+        final match = providers
+            .where((p) => p.providerId == sliderProvider.providerId)
+            .toList();
+        final target = match.isNotEmpty
+            ? match.first
+            : (providers.isNotEmpty ? providers.first : null);
 
         if (target != null) {
           Navigator.of(context).push(
@@ -106,11 +112,17 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
           );
         } else {
           // fallback: افتح صفحة الـ network مع الـ search
-          context.push('/medicard-network', extra: {'searchQuery': sliderProvider.name});
+          context.push(
+            '/medicard-network',
+            extra: {'searchQuery': sliderProvider.name},
+          );
         }
       },
       failure: (_) {
-        context.push('/medicard-network', extra: {'searchQuery': sliderProvider.name});
+        context.push(
+          '/medicard-network',
+          extra: {'searchQuery': sliderProvider.name},
+        );
       },
     );
   }
@@ -383,7 +395,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
           ),
 
           Padding(
-            padding: EdgeInsets.only(bottom: 30.h + MediaQuery.of(context).padding.bottom),
+            padding: EdgeInsets.only(
+              bottom: 30.h + MediaQuery.of(context).padding.bottom,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -392,7 +406,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                   TopProvidersSlider(
                     providers: sliderData,
                     onProviderTap: (name) {
-                      final provider = sliderData.firstWhere((p) => p.name == name);
+                      final provider = sliderData.firstWhere(
+                        (p) => p.name == name,
+                      );
                       _openProviderDetails(provider);
                     },
                   ),
@@ -552,13 +568,17 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                   SizedBox(height: 16.h),
 
                   // Card Number
-                  Text(
-                    data.cardId,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E3A8A),
-                      letterSpacing: 2,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      data.cardId,
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1E3A8A),
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
 
@@ -686,10 +706,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
             );
 
             if (result == true && context.mounted && widget.cardNo != null) {
-              cubit.getHomeInfo(
-                cardNo: widget.cardNo!,
-                lang: lang,
-              );
+              cubit.getHomeInfo(cardNo: widget.cardNo!, lang: lang);
             }
           } else {
             showErrorToast('medicard_home.no_personal_data'.tr());

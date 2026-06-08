@@ -190,13 +190,17 @@ class _MediCardVisualContent extends StatelessWidget {
                   SizedBox(height: 16.h),
 
                   // Card Number
-                  Text(
-                    cardNumber,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E3A8A),
-                      letterSpacing: 2,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      cardNumber,
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1E3A8A),
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
 
