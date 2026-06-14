@@ -399,6 +399,9 @@
     "provider_count": "Provider",
     "location_and_address": "Location & Address",
     "open_in_maps": "Open in Maps",
+    "choose_maps_app": "Open with",
+    "apple_maps": "Apple Maps",
+    "google_maps": "Google Maps",
     "services_and_discounts": "Services & Discounts",
     "directions": "Directions"
   },

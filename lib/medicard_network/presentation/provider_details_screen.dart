@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../network/data/network_provider_response_model.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../core/services/url_launcher_service.dart';
+import '../core/maps_launcher.dart';
 import '../core/network_colors.dart';
 
 class ProviderDetailsScreen extends StatelessWidget {
@@ -22,21 +23,13 @@ class ProviderDetailsScreen extends StatelessWidget {
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
-  Future<void> _openMaps() async {
-    final lat = provider.latitude;
-    final lng = provider.longitude;
-    if (lat == 0 && lng == 0) return;
-    try {
-      final nav = Uri.parse('google.navigation:q=$lat,$lng');
-      if (await canLaunchUrl(nav)) { await launchUrl(nav); return; }
-      final web = Uri.parse(
-          'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
-      if (await launchUrl(web, mode: LaunchMode.externalApplication)) return;
-      if (provider.mapsUrl.isNotEmpty) {
-        await launchUrl(Uri.parse(provider.mapsUrl),
-            mode: LaunchMode.externalApplication);
-      }
-    } catch (_) {}
+  Future<void> _openMaps(BuildContext context) async {
+    await MapsLauncher.showPicker(
+      context,
+      lat: provider.latitude,
+      lng: provider.longitude,
+      fallbackUrl: provider.mapsUrl.isNotEmpty ? provider.mapsUrl : null,
+    );
   }
 
   @override
@@ -66,7 +59,7 @@ class ProviderDetailsScreen extends StatelessWidget {
                     _LocationCard(
                       provider: provider,
                       catColor: _catColor,
-                      onOpenMaps: _openMaps,
+                      onOpenMaps: () => _openMaps(context),
                     ),
 
                   // ── Services card ───────────────────────────────────────
@@ -87,7 +80,7 @@ class ProviderDetailsScreen extends StatelessWidget {
       bottomNavigationBar: _BottomCTA(
         provider: provider,
         onCall: _call,
-        onMaps: _openMaps,
+        onMaps: () => _openMaps(context),
       ),
     );
   }

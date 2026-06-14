@@ -393,6 +393,9 @@
     "provider_count": "مقدم خدمة",
     "location_and_address": "الموقع والعنوان",
     "open_in_maps": "فتح في الخرائط",
+    "choose_maps_app": "افتح باستخدام",
+    "apple_maps": "خرائط Apple",
+    "google_maps": "خرائط Google",
     "services_and_discounts": "الخدمات والخصومات",
     "directions": "الاتجاهات"
   },

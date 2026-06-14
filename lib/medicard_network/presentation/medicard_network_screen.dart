@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/di/service_locator.dart';
 import '../../core/services/location_service.dart';
+import '../core/maps_launcher.dart';
 import '../core/network_colors.dart';
 import '../logic/medicard_network_cubit.dart';
 import '../../core/utils/language_helper.dart';
@@ -221,24 +221,18 @@ class _MedicardNetworkScreenState extends State<MedicardNetworkScreen> {
     if (await canLaunchUrl(uri)) await launchUrl(uri);
   }
 
-  Future<void> _openMaps(double lat, double lng, String? url) async {
-    if (lat == 0 && lng == 0) return;
-    try {
-      final nav = Uri.parse('google.navigation:q=$lat,$lng');
-      if (await canLaunchUrl(nav)) {
-        await launchUrl(nav);
-        return;
-      }
-      final web = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-      );
-      if (await launchUrl(web, mode: LaunchMode.externalApplication)) return;
-      if (url != null && url.isNotEmpty) {
-        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      if (kDebugMode) debugPrint('Maps error: $e');
-    }
+  Future<void> _openMaps(
+    BuildContext context,
+    double lat,
+    double lng,
+    String? url,
+  ) async {
+    await MapsLauncher.showPicker(
+      context,
+      lat: lat,
+      lng: lng,
+      fallbackUrl: url,
+    );
   }
 
   @override
@@ -471,7 +465,8 @@ class _MedicardNetworkScreenState extends State<MedicardNetworkScreen> {
                               child: ProviderCard(
                                 provider: provider,
                                 onCall: _call,
-                                onMaps: _openMaps,
+                                onMaps: (lat, lng, url) =>
+                                    _openMaps(context, lat, lng, url),
                                 onTap: () => Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => ProviderDetailsScreen(

@@ -164,7 +164,9 @@ class ProviderCard extends StatelessWidget {
                           ),
                           SizedBox(width: 8.w),
                           _MapButton(
-                            enabled: provider.mapsUrl.isNotEmpty,
+                            enabled: provider.mapsUrl.isNotEmpty ||
+                                (provider.latitude != 0 &&
+                                    provider.longitude != 0),
                             onTap: () => onMaps(
                               provider.latitude,
                               provider.longitude,
