@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../core/constants/app_assets.dart';
+import 'medicard_card_shell.dart';
 
 class MediCardCardVisual extends StatefulWidget {
   final String cardNumber;
@@ -51,10 +51,7 @@ class _MediCardCardVisualState extends State<MediCardCardVisual>
     );
 
     _cardRotationAnimation = Tween<double>(begin: -0.1, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _cardAnimationController,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _cardAnimationController, curve: Curves.easeOut),
     );
 
     _cardAnimationController.forward();
@@ -69,8 +66,9 @@ class _MediCardCardVisualState extends State<MediCardCardVisual>
   @override
   Widget build(BuildContext context) {
     // Get display values from inputs or show placeholders
-    String displayCardNumber =
-        widget.cardNumber.isEmpty ? 'XXXXXXXXXXXX' : widget.cardNumber;
+    String displayCardNumber = widget.cardNumber.isEmpty
+        ? 'XXXXXXXXXXXX'
+        : widget.cardNumber;
 
     String displayName = '';
     if (widget.firstName.isNotEmpty || widget.lastName.isNotEmpty) {
@@ -120,254 +118,132 @@ class _MediCardVisualContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 230.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Stack(
+    return MedicardCardShell(
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Background gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFE8EEF5),
-                    Color(0xFFF5F7FA),
-                  ],
+            SizedBox(height: 55.h),
+
+            // Card Number
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                cardNumber,
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 2,
                 ),
               ),
             ),
 
-            // Wave decoration at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 120.h,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Color(0xFF1E3A8A),
-                      Color(0xFF1E3A8A),
+            const Spacer(),
+
+            // Bottom section with user info and profile image
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // User info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'medicard_registration.card_member_name'.tr(),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 3.h),
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        '${'medicard_registration.card_valid_thru'.tr()}: $validThru',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                child: CustomPaint(
-                  painter: _WavePainter(),
-                ),
-              ),
-            ),
 
-            // Content
-            Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Logo
-                  Image.asset(
-                    AppAssets.mediLogo,
-                    width: 80.w,
-                    height: 35.h,
-                    fit: BoxFit.contain,
-                  ),
-                  SizedBox(height: 16.h),
-
-                  // Card Number
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      cardNumber,
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1E3A8A),
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  // Bottom section with QR, user info, and profile image
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                // Profile Image (if available)
+                if (profileImage != null) ...[
+                  SizedBox(width: 8.w),
+                  Stack(
                     children: [
-                      // QR Code
                       Container(
                         width: 65.w,
                         height: 65.h,
-                        padding: EdgeInsets.all(5.w),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
-                        child: Icon(
-                          Icons.qr_code_2_rounded,
-                          size: 48.sp,
-                          color: const Color(0xFF1E3A8A),
-                        ),
-                      ),
-                      SizedBox(width: 12.w),
-
-                      // User info
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'medicard_registration.card_member_name'.tr(),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              name,
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              '${'medicard_registration.card_valid_thru'.tr()}: $validThru',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6.r),
+                          child: Image.file(profileImage!, fit: BoxFit.cover),
                         ),
                       ),
-
-                      // Profile Image (if available)
-                      if (profileImage != null) ...[
-                        SizedBox(width: 8.w),
-                        Stack(
-                          children: [
-                            Container(
-                              width: 65.w,
-                              height: 65.h,
+                      if (onRemoveImage != null)
+                        Positioned(
+                          top: -6,
+                          right: -6,
+                          child: GestureDetector(
+                            onTap: onRemoveImage,
+                            child: Container(
+                              width: 24.w,
+                              height: 24.h,
                               decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8.r),
+                                color: Colors.red,
+                                shape: BoxShape.circle,
                                 border: Border.all(
                                   color: Colors.white,
                                   width: 2,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6.r),
-                                child: Image.file(
-                                  profileImage!,
-                                  fit: BoxFit.cover,
-                                ),
+                              child: Icon(
+                                Icons.close,
+                                color: Colors.white,
+                                size: 16.sp,
                               ),
                             ),
-                            if (onRemoveImage != null)
-                              Positioned(
-                                top: -6,
-                                right: -6,
-                                child: GestureDetector(
-                                  onTap: onRemoveImage,
-                                  child: Container(
-                                    width: 24.w,
-                                    height: 24.h,
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.3),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.close,
-                                      color: Colors.white,
-                                      size: 16.sp,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                          ],
+                          ),
                         ),
-                      ],
                     ],
                   ),
                 ],
-              ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-}
-
-// Custom painter for wave decoration
-class _WavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF0F1F4A).withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, size.height * 0.3);
-
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.1,
-      size.width * 0.5,
-      size.height * 0.3,
-    );
-
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.5,
-      size.width,
-      size.height * 0.3,
-    );
-
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

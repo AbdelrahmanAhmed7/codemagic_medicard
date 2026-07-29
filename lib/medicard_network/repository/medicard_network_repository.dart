@@ -33,6 +33,7 @@ class MedicardNetworkRepository {
     int? cityId,
     double? latitude,
     double? longitude,
+    int? type,
     bool? orderByDiscounts,
     int page = 1,
     int pageSize = 20,
@@ -47,6 +48,7 @@ class MedicardNetworkRepository {
         cityId: cityId,
         latitude: latitude,
         longitude: longitude,
+        type: type,
         orderByDiscounts: orderByDiscounts,
         page: page,
         pageSize: pageSize,
@@ -61,9 +63,17 @@ class MedicardNetworkRepository {
     }
   }
 
-  Future<ApiResult<GovernmentResponse>> getGovernments(String lang, {int page = 1, int pageSize = 50}) async {
+  Future<ApiResult<GovernmentResponse>> getGovernments(
+    String lang, {
+    int page = 1,
+    int pageSize = 50,
+  }) async {
     try {
-      final response = await _apiService.getGovernments(lang, page: page, pageSize: pageSize);
+      final response = await _apiService.getGovernments(
+        lang,
+        page: page,
+        pageSize: pageSize,
+      );
       if (response.success) {
         return ApiResult.success(response);
       } else {
@@ -74,9 +84,19 @@ class MedicardNetworkRepository {
     }
   }
 
-  Future<ApiResult<CityResponse>> getCitiesByGovernment(String lang, int governmentId, {int page = 1, int pageSize = 50}) async {
+  Future<ApiResult<CityResponse>> getCitiesByGovernment(
+    String lang,
+    int governmentId, {
+    int page = 1,
+    int pageSize = 50,
+  }) async {
     try {
-      final response = await _apiService.getCitiesByGovernment(lang, governmentId: governmentId, page: page, pageSize: pageSize);
+      final response = await _apiService.getCitiesByGovernment(
+        lang,
+        governmentId: governmentId,
+        page: page,
+        pageSize: pageSize,
+      );
       if (response.success) {
         return ApiResult.success(response);
       } else {
@@ -87,7 +107,9 @@ class MedicardNetworkRepository {
     }
   }
 
-  Future<ApiResult<TopProvidersSliderResponse>> getTopProvidersForSlider(String lang) async {
+  Future<ApiResult<TopProvidersSliderResponse>> getTopProvidersForSlider(
+    String lang,
+  ) async {
     try {
       final response = await _apiService.getTopProvidersForSlider(lang);
       if (response.success) {

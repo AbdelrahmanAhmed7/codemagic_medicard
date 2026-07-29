@@ -111,9 +111,13 @@ class AppRouter {
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>?;
             final searchQuery = extra?['searchQuery'] as String?;
+            final type = extra?['type'] as int?;
             return BlocProvider(
               create: (context) => sl<MedicardNetworkCubit>(),
-              child: MedicardNetworkScreen(initialSearchQuery: searchQuery),
+              child: MedicardNetworkScreen(
+                initialSearchQuery: searchQuery,
+                initialType: type,
+              ),
             );
           },
         ),

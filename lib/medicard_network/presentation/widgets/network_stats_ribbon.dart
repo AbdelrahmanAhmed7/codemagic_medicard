@@ -6,14 +6,12 @@ import '../../core/network_colors.dart';
 
 class NetworkStatsRibbon extends StatelessWidget {
   final int categoryCount;
-  final String totalProviders;
-  final String activeDiscounts;
+  final int providerCount;
 
   const NetworkStatsRibbon({
     super.key,
     required this.categoryCount,
-    this.totalProviders = '209+',
-    this.activeDiscounts = '٣٦',
+    required this.providerCount,
   });
 
   @override
@@ -38,9 +36,15 @@ class NetworkStatsRibbon extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatItem(value: '$categoryCount', label: 'network.category_count'.tr()),
+          _StatItem(
+            value: '$categoryCount',
+            label: 'network.category_count'.tr(),
+          ),
           _StatDivider(),
-          _StatItem(value: totalProviders, label: 'network.provider_count'.tr()),
+          _StatItem(
+            value: '$providerCount',
+            label: 'network.provider_count'.tr(),
+          ),
         ],
       ),
     );

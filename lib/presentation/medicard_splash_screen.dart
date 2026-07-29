@@ -1,7 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
@@ -15,15 +16,43 @@ class MedicardSplashScreen extends StatefulWidget {
 }
 
 class _MedicardSplashScreenState extends State<MedicardSplashScreen> {
+  late final VideoPlayerController _videoController;
+  Timer? _fallbackTimer;
+  bool _didNavigate = false;
+
   @override
   void initState() {
     super.initState();
+    _videoController = VideoPlayerController.asset(
+      AppAssets.medicardSplashVideo,
+    )..addListener(_handleVideoProgress);
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    try {
+      await _videoController.initialize();
+      await _videoController.setLooping(false);
+      await _videoController.play();
+      if (mounted) setState(() {});
+      _fallbackTimer = Timer(const Duration(seconds: 4), _navigate);
+    } catch (_) {
+      _fallbackTimer = Timer(const Duration(seconds: 2), _navigate);
+    }
+  }
+
+  void _handleVideoProgress() {
+    if (!_videoController.value.isInitialized ||
+        !_videoController.value.isCompleted) {
+      return;
+    }
     _navigate();
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
+    if (_didNavigate) return;
+    _didNavigate = true;
+    _fallbackTimer?.cancel();
 
     final cardNo = await SharedPrefHelper.getString(
       SharedPrefKeys.medicardCardNo,
@@ -38,105 +67,35 @@ class _MedicardSplashScreenState extends State<MedicardSplashScreen> {
   }
 
   @override
+  void dispose() {
+    _fallbackTimer?.cancel();
+    _videoController
+      ..removeListener(_handleVideoProgress)
+      ..dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0D2B6B),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0D2B6B),
-              Color(0xFF1A4DB5),
-              Color(0xFF2563EB),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          bottom: true,
-          child: Column(
-            children: [
-              const Spacer(),
-
-              // Logo
-              Container(
-                width: 110.w,
-                height: 110.w,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 30,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
+      backgroundColor: Colors.white,
+      body: SizedBox.expand(
+        child: _videoController.value.isInitialized
+            ? FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController.value.size.width,
+                  height: _videoController.value.size.height,
+                  child: VideoPlayer(_videoController),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.all(22.w),
-                  child: Image.asset(
-                    AppAssets.mediLogo,
-                    fit: BoxFit.contain,
-                  ),
+              )
+            : Center(
+                child: Image.asset(
+                  AppAssets.mediLogo,
+                  width: 120,
+                  fit: BoxFit.contain,
                 ),
               ),
-
-              SizedBox(height: 28.h),
-
-              // App name
-              Text(
-                'MediCard',
-                style: TextStyle(
-                  fontSize: 34.sp,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 1.5,
-                ),
-              ),
-
-              SizedBox(height: 8.h),
-
-              // Tagline
-              Text(
-                'medicard_splash.tagline'.tr(),
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  letterSpacing: 0.8,
-                ),
-              ),
-
-              const Spacer(),
-
-              // Bottom brand
-              Column(
-                children: [
-                  Text(
-                    'medicard_splash.powered_by'.tr(),
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      color: Colors.white.withValues(alpha: 0.5),
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Image.asset(
-                    AppAssets.khusm,
-                    height: 30.h,
-                    fit: BoxFit.contain,
-                    color: Colors.white,
-                    colorBlendMode: BlendMode.srcIn,
-                  ),
-                  SizedBox(height: 32.h),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

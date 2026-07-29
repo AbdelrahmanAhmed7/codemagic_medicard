@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
 import '../core/constants/legal_urls.dart';
 import '../core/di/service_locator.dart';
@@ -16,6 +15,7 @@ import 'widgets/legal_links_row.dart';
 import '../data/card_personal_info_response_model.dart';
 import 'logic/medicard_home_cubit.dart';
 import 'logic/medicard_home_state.dart';
+import 'widgets/medicard_card_shell.dart';
 
 class MedicardMyCardScreen extends StatefulWidget {
   final CardPersonalInfoDataModel personalData;
@@ -141,7 +141,12 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
             child: SingleChildScrollView(
               physics:
                   const AlwaysScrollableScrollPhysics(), // Force scroll for RefreshIndicator
-              padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 16.h + MediaQuery.of(context).padding.bottom),
+              padding: EdgeInsets.fromLTRB(
+                16.w,
+                16.h,
+                16.w,
+                16.h + MediaQuery.of(context).padding.bottom,
+              ),
               child: Column(
                 children: [
                   _buildMediCard(_currentData), // Updated to the premium design
@@ -164,190 +169,100 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
   }
 
   Widget _buildMediCard(CardPersonalInfoDataModel data) {
-    return Container(
-      height: 230.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Stack(
+    return MedicardCardShell(
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Background gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE8EEF5), Color(0xFFF5F7FA)],
-                ),
+            SizedBox(height: 55.h),
+
+            // Card Number
+            Text(
+              data.cardId,
+              style: TextStyle(
+                fontSize: 24.sp,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 2,
               ),
             ),
 
-            // Wave decoration at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 120.h,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF1E3A8A), Color(0xFF1E3A8A)],
-                  ),
-                ),
-                child: CustomPaint(painter: _WavePainter()),
-              ),
-            ),
+            const Spacer(),
 
-            // Content
-            Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Logo and Status
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Bottom section with user info and photo
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        AppAssets.mediLogo,
-                        width: 80.w,
-                        height: 35.h,
-                        fit: BoxFit.contain,
+                      Text(
+                        'personal_info.full_name'.tr(),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
+                      SizedBox(height: 3.h),
+                      Text(
+                        '${data.firstName} ${data.lastName}',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.green, width: 1.5),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'insurance_plan.active'.tr(),
-                              style: TextStyle(
-                                color: const Color(0xFF1E3A8A),
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                ),
 
-                  // Card Number
-                  Text(
-                    data.cardId,
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1E3A8A),
-                      letterSpacing: 2,
+                if (data.image != null && data.image!.isNotEmpty) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    width: 65.w,
+                    height: 65.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6.r),
+                      child: CachedNetworkImage(
+                        imageUrl: data.image!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF1E3A8A),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Icon(
+                          Icons.person,
+                          color: const Color(0xFF1E3A8A),
+                          size: 30.sp,
+                        ),
+                      ),
                     ),
                   ),
-
-                  const Spacer(),
-
-                  // Bottom section with user info and photo
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'personal_info.full_name'.tr(),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              '${data.firstName} ${data.lastName}',
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (data.image != null && data.image!.isNotEmpty) ...[
-                        SizedBox(width: 8.w),
-                        Container(
-                          width: 65.w,
-                          height: 65.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6.r),
-                            child: CachedNetworkImage(
-                              imageUrl: data.image!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Icon(
-                                Icons.person,
-                                color: const Color(0xFF1E3A8A),
-                                size: 30.sp,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
                 ],
-              ),
+              ],
             ),
           ],
         ),
@@ -486,10 +401,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
             context,
             icon: Icons.email_outlined,
             title: 'personal_info.email_address'.tr(),
-            value:
-                (data.email != null && data.email!.isNotEmpty)
-                    ? data.email!
-                    : '-',
+            value: (data.email != null && data.email!.isNotEmpty)
+                ? data.email!
+                : '-',
           ),
           _buildInfoItem(
             context,
@@ -574,12 +488,15 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _showDeleteAccountDialog(context),
-        icon: const Icon(Icons.delete_forever_outlined, color: Color(0xFFB91C1C)),
+        icon: const Icon(
+          Icons.delete_forever_outlined,
+          color: Color(0xFFB91C1C),
+        ),
         label: Text(
           'account_deletion.title'.tr(),
-          style: AppTextStyles.font16BlackMedium(context).copyWith(
-            color: const Color(0xFFB91C1C),
-          ),
+          style: AppTextStyles.font16BlackMedium(
+            context,
+          ).copyWith(color: const Color(0xFFB91C1C)),
         ),
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 16.h),
@@ -599,7 +516,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+        ),
         child: Padding(
           padding: EdgeInsets.all(24.w),
           child: Column(
@@ -620,10 +539,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
               Text(
                 'account_deletion.contact_message'.tr(),
                 textAlign: TextAlign.center,
-                style: AppTextStyles.font14GreyRegular(context).copyWith(
-                  color: const Color(0xFF64748B),
-                  height: 1.5,
-                ),
+                style: AppTextStyles.font14GreyRegular(
+                  context,
+                ).copyWith(color: const Color(0xFF64748B), height: 1.5),
               ),
               SizedBox(height: 24.h),
               SizedBox(
@@ -735,10 +653,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                 Text(
                   'logout.confirmation_message'.tr(),
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.font14GreyRegular(context).copyWith(
-                    color: const Color(0xFF64748B),
-                    height: 1.5,
-                  ),
+                  style: AppTextStyles.font14GreyRegular(
+                    context,
+                  ).copyWith(color: const Color(0xFF64748B), height: 1.5),
                 ),
                 SizedBox(height: 32.h),
                 Row(
@@ -755,10 +672,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                         ),
                         child: Text(
                           'common.cancel'.tr(),
-                          style:
-                              AppTextStyles.font14BlackMedium(context).copyWith(
-                                color: const Color(0xFF64748B),
-                              ),
+                          style: AppTextStyles.font14BlackMedium(
+                            context,
+                          ).copyWith(color: const Color(0xFF64748B)),
                         ),
                       ),
                     ),
@@ -779,10 +695,9 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                         ),
                         child: Text(
                           'logout.confirm_button'.tr(),
-                          style:
-                              AppTextStyles.font14BlackMedium(context).copyWith(
-                                color: Colors.white,
-                              ),
+                          style: AppTextStyles.font14BlackMedium(
+                            context,
+                          ).copyWith(color: Colors.white),
                         ),
                       ),
                     ),
@@ -804,35 +719,4 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
       return dateStr;
     }
   }
-}
-
-class _WavePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF0F1F4A).withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    path.moveTo(0, size.height * 0.3);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.1,
-      size.width * 0.5,
-      size.height * 0.3,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.5,
-      size.width,
-      size.height * 0.3,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

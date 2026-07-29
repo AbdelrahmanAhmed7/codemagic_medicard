@@ -43,6 +43,7 @@ dependencies:
   path_provider: ^2.1.5
   permission_handler: ^12.0.1
   fluttertoast: ^9.0.0
+  video_player: ^2.10.0
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +73,9 @@ flutter:
     - assets/fonts/
     - assets/translations/
     - assets/medi_logo.png
+    - assets/medicard_card_bg.jpeg
+    - assets/medicard_summer_popup.jpg
+    - assets/medicard_splash.mp4
     - assets/Khusm Logo.png
 
   fonts:

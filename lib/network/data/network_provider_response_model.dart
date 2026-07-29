@@ -10,7 +10,7 @@ class NetworkProviderResponse {
   final String timestamp;
   final String message;
   final NetworkProviderData? data;
-  
+
   NetworkProviderResponse({
     required this.success,
     required this.timestamp,
@@ -66,17 +66,27 @@ class NetworkProvider {
   final int providerId;
   final int locationId;
   final String providerName;
+  @JsonKey(defaultValue: '')
   final String providerLogo;
+  @JsonKey(defaultValue: '')
   final String categoryName;
   final double latitude;
   final double longitude;
+  @JsonKey(defaultValue: '')
   final String government;
+  @JsonKey(defaultValue: '')
   final String city;
+  @JsonKey(defaultValue: '')
   final String area;
+  @JsonKey(defaultValue: '')
   final String address;
+  @JsonKey(defaultValue: '')
   final String fullAddress;
+  @JsonKey(defaultValue: '')
   final String mapsUrl;
+  @JsonKey(defaultValue: '')
   final String mobile;
+  @JsonKey(defaultValue: '')
   final String hotline;
   final double? distance;
   final String? discount;
@@ -149,10 +159,7 @@ class UserLocation {
   final double latitude;
   final double longitude;
 
-  UserLocation({
-    required this.latitude,
-    required this.longitude,
-  });
+  UserLocation({required this.latitude, required this.longitude});
 
   factory UserLocation.fromJson(Map<String, dynamic> json) =>
       _$UserLocationFromJson(json);

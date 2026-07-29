@@ -28,6 +28,7 @@ class MedicardNetworkLoaded extends MedicardNetworkState {
   final String? searchKey;
   final bool orderByDiscounts;
   final bool hasMore;
+  final int providerTotalCount;
   final double? latitude;
   final double? longitude;
   final LocationAccessStatus? locationStatus;
@@ -45,6 +46,7 @@ class MedicardNetworkLoaded extends MedicardNetworkState {
     this.searchKey,
     this.orderByDiscounts = false,
     this.hasMore = false,
+    this.providerTotalCount = 0,
     this.latitude,
     this.longitude,
     this.locationStatus,
@@ -67,6 +69,7 @@ class MedicardNetworkLoaded extends MedicardNetworkState {
     bool resetSearch = false,
     bool? orderByDiscounts,
     bool? hasMore,
+    int? providerTotalCount,
     double? latitude,
     bool resetLocation = false,
     double? longitude,
@@ -92,6 +95,7 @@ class MedicardNetworkLoaded extends MedicardNetworkState {
       searchKey: resetSearch ? null : (searchKey ?? this.searchKey),
       orderByDiscounts: orderByDiscounts ?? this.orderByDiscounts,
       hasMore: hasMore ?? this.hasMore,
+      providerTotalCount: providerTotalCount ?? this.providerTotalCount,
       latitude: resetLocation ? null : (latitude ?? this.latitude),
       longitude: resetLocation ? null : (longitude ?? this.longitude),
       locationStatus: resetLocationStatus
@@ -112,6 +116,7 @@ class MedicardNetworkError extends MedicardNetworkState {
 class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
   final MedicardNetworkRepository _repository;
   int _currentPage = 1;
+  int? _networkType;
   static const int _pageSize = 20;
 
   MedicardNetworkCubit(this._repository) : super(MedicardNetworkInitial());
@@ -122,8 +127,11 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
     double? longitude,
     LocationAccessStatus? locationStatus,
     String? initialSearchQuery,
+    int? type,
   }) async {
     emit(MedicardNetworkLoading());
+    _currentPage = 1;
+    _networkType = type;
 
     List<NetworkCategory> categories = [];
     List<Government> governments = [];
@@ -204,6 +212,7 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
       orderByDiscounts: orderByDiscounts,
       page: _currentPage,
       pageSize: _pageSize,
+      type: _networkType,
     );
 
     result.when(
@@ -211,6 +220,7 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
         final latestState = state;
         List<NetworkProvider> allProviders = [];
         bool hasMore = false;
+        int providerTotalCount = 0;
 
         if (response.data != null) {
           if (latestState is MedicardNetworkLoaded && _currentPage > 1) {
@@ -222,6 +232,8 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
             allProviders = response.data!.providers;
           }
           hasMore = response.data!.pagination?.hasNextPage ?? false;
+          providerTotalCount =
+              response.data!.pagination?.totalCount ?? allProviders.length;
         }
 
         if (latestState is MedicardNetworkLoaded) {
@@ -229,6 +241,7 @@ class MedicardNetworkCubit extends Cubit<MedicardNetworkState> {
             latestState.copyWith(
               providers: allProviders,
               hasMore: hasMore,
+              providerTotalCount: providerTotalCount,
               isLocationLoading: false,
               isLoading: false, // Done loading
               // Pass actual values and explicitly reset if they are null

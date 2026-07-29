@@ -25,8 +25,13 @@ import 'widgets/network_state_widgets.dart';
 
 class MedicardNetworkScreen extends StatefulWidget {
   final String? initialSearchQuery;
+  final int? initialType;
 
-  const MedicardNetworkScreen({super.key, this.initialSearchQuery});
+  const MedicardNetworkScreen({
+    super.key,
+    this.initialSearchQuery,
+    this.initialType,
+  });
 
   @override
   State<MedicardNetworkScreen> createState() => _MedicardNetworkScreenState();
@@ -100,7 +105,10 @@ class _MedicardNetworkScreenState extends State<MedicardNetworkScreen> {
       final currentState = cubit.state;
       // Only act if we're in a loaded state that still has no location
       if (currentState is! MedicardNetworkLoaded) return;
-      if (currentState.locationStatus != LocationAccessStatus.permanentlyDenied) return;
+      if (currentState.locationStatus !=
+          LocationAccessStatus.permanentlyDenied) {
+        return;
+      }
 
       // User may have just granted permission from app settings
       final result = await _locationService.tryGetLocationSilently();
@@ -130,6 +138,15 @@ class _MedicardNetworkScreenState extends State<MedicardNetworkScreen> {
     if (!mounted) return;
     final cubit = context.read<MedicardNetworkCubit>();
     final lang = LanguageHelper.getLanguageCode(context);
+
+    if (widget.initialType != null) {
+      cubit.loadInitialData(
+        lang,
+        initialSearchQuery: widget.initialSearchQuery,
+        type: widget.initialType,
+      );
+      return;
+    }
 
     // resolveLocation handles permission + GPS dialog + coordinate fetch
     // in strict sequence. The SettingsClient dialog is shown inline via
@@ -347,6 +364,7 @@ class _MedicardNetworkScreenState extends State<MedicardNetworkScreen> {
                   SliverToBoxAdapter(
                     child: NetworkStatsRibbon(
                       categoryCount: state.categories.length,
+                      providerCount: state.providerTotalCount,
                     ),
                   ),
 

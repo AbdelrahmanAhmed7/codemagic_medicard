@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../core/constants/api_result.dart';
 import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
+import '../core/di/service_locator.dart';
 import '../core/helpers/shared_pref_helper.dart';
 import '../core/theming/app_toast.dart';
 import '../data/card_home_info_response_model.dart';
@@ -15,9 +16,9 @@ import '../data/card_personal_info_response_model.dart';
 import '../medicard_network/presentation/provider_details_screen.dart';
 import '../medicard_network/repository/medicard_network_repository.dart';
 import '../network/data/top_providers_slider_model.dart';
-import '../core/di/service_locator.dart';
 import 'logic/medicard_home_cubit.dart';
 import 'logic/medicard_home_state.dart';
+import 'widgets/medicard_card_shell.dart';
 import 'widgets/top_providers_slider.dart';
 
 class MediCardHomeScreen extends StatefulWidget {
@@ -31,6 +32,8 @@ class MediCardHomeScreen extends StatefulWidget {
 
 class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     with SingleTickerProviderStateMixin {
+  static bool _hasShownSummerPopupThisSession = false;
+
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
@@ -66,7 +69,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     super.dispose();
   }
 
-  /// فتح تفاصيل provider مباشرة بالـ providerId
   Future<void> _openProviderDetails(SliderProvider sliderProvider) async {
     final lang = context.locale.languageCode;
     final cardNo = await SharedPrefHelper.getString(
@@ -74,7 +76,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     );
     final repo = sl<MedicardNetworkRepository>();
 
-    // show loading
     if (!mounted) return;
     showDialog(
       context: context,
@@ -91,12 +92,11 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     );
 
     if (!mounted) return;
-    Navigator.of(context).pop(); // close loading
+    Navigator.of(context).pop();
 
     result.when(
       success: (response) {
         final providers = response.data?.providers ?? [];
-        // ابحث عن provider بنفس الـ providerId
         final match = providers
             .where((p) => p.providerId == sliderProvider.providerId)
             .toList();
@@ -111,7 +111,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
             ),
           );
         } else {
-          // fallback: افتح صفحة الـ network مع الـ search
           context.push(
             '/medicard-network',
             extra: {'searchQuery': sliderProvider.name},
@@ -130,16 +129,27 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<MedicardHomeCubit, MedicardHomeState>(
+      listenWhen: (previous, current) {
+        final wasSuccess = previous.maybeWhen(
+          success: (homeInfo, personalInfo, sliderInfo) => true,
+          orElse: () => false,
+        );
+        final isSuccess = current.maybeWhen(
+          success: (homeInfo, personalInfo, sliderInfo) => true,
+          orElse: () => false,
+        );
+        return !wasSuccess && isSuccess;
+      },
       listener: (context, state) {
-        state.when(
-          initial: () {},
-          loading: () {},
+        state.maybeWhen(
           success: (homeInfo, personalInfo, sliderInfo) {
-            _animController.forward();
+            if (!_animController.isCompleted) {
+              _animController.forward();
+            }
+            _showSummerPopupsOnce();
           },
-          failed: (error) {
-            showErrorToast(error);
-          },
+          failed: (error) => showErrorToast(error),
+          orElse: () {},
         );
       },
       builder: (context, state) {
@@ -189,6 +199,59 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                 ),
               ],
             ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showSummerPopupsOnce() async {
+    if (_hasShownSummerPopupThisSession || !mounted) return;
+    _hasShownSummerPopupThisSession = true;
+
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+
+    final shouldShowMapPopup = await showDialog<bool>(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 18.h),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: _SummerAdDialog(
+            onClose: () {
+              Navigator.of(dialogContext, rootNavigator: true).pop(false);
+            },
+            onOpenMap: () {
+              Navigator.of(dialogContext, rootNavigator: true).pop(true);
+            },
+          ),
+        );
+      },
+    );
+
+    if (!mounted || shouldShowMapPopup != true) return;
+
+    await showDialog<void>(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return Dialog(
+          insetPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 24.h),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: _SummerOfferDialog(
+            onClose: () {
+              Navigator.of(dialogContext, rootNavigator: true).pop();
+            },
+            onTypeSelected: (type) {
+              Navigator.of(dialogContext, rootNavigator: true).pop();
+              context.push('/medicard-network', extra: {'type': type});
+            },
           ),
         );
       },
@@ -471,196 +534,106 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   // ─── MediCard (UNCHANGED) ─────────────────────────────────────────────────
 
   Widget _buildMediCard(CardHomeInfoDataModel data) {
-    return Container(
-      height: 230.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16.r),
-        child: Stack(
+    return MedicardCardShell(
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Background gradient
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFFE8EEF5), Color(0xFFF5F7FA)],
+            SizedBox(height: 55.h),
+
+            // Card Number
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                data.cardId,
+                style: TextStyle(
+                  fontSize: 24.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 2,
                 ),
               ),
             ),
 
-            // Wave decoration at bottom
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 120.h,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFF1E3A8A), Color(0xFF1E3A8A)],
-                  ),
-                ),
-                child: CustomPaint(painter: _WavePainter()),
-              ),
-            ),
+            const Spacer(),
 
-            // Content
-            Padding(
-              padding: EdgeInsets.all(20.w),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Logo and Status
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Bottom section with user info and photo
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Image.asset(
-                        AppAssets.mediLogo,
-                        width: 80.w,
-                        height: 35.h,
-                        fit: BoxFit.contain,
+                      Text(
+                        'personal_info.full_name'.tr(),
+                        style: TextStyle(
+                          fontSize: 10.sp,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 10.w,
-                          vertical: 4.h,
+                      SizedBox(height: 3.h),
+                      Text(
+                        '${data.firstName} ${data.lastName}',
+                        style: TextStyle(
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: Colors.green, width: 1.5),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                              size: 14.sp,
-                            ),
-                            SizedBox(width: 4.w),
-                            Text(
-                              'insurance_plan.active'.tr(),
-                              style: TextStyle(
-                                color: const Color(0xFF1E3A8A),
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
+                        style: TextStyle(
+                          fontSize: 11.sp,
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.h),
+                ),
 
-                  // Card Number
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      data.cardId,
-                      style: TextStyle(
-                        fontSize: 24.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF1E3A8A),
-                        letterSpacing: 2,
+                if (data.memberPhoto != null &&
+                    data.memberPhoto!.isNotEmpty) ...[
+                  SizedBox(width: 8.w),
+                  Container(
+                    width: 65.w,
+                    height: 65.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6.r),
+                      child: CachedNetworkImage(
+                        imageUrl: data.memberPhoto!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFF1E3A8A),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Icon(
+                          Icons.person,
+                          color: const Color(0xFF1E3A8A),
+                          size: 30.sp,
+                        ),
                       ),
                     ),
                   ),
-
-                  const Spacer(),
-
-                  // Bottom section with user info and photo
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      SizedBox(width: 12.w),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'personal_info.full_name'.tr(),
-                              style: TextStyle(
-                                fontSize: 10.sp,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: 3.h),
-                            Text(
-                              '${data.firstName} ${data.lastName}',
-                              style: TextStyle(
-                                fontSize: 15.sp,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            SizedBox(height: 8.h),
-                            Text(
-                              '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
-                              style: TextStyle(
-                                fontSize: 11.sp,
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      if (data.memberPhoto != null &&
-                          data.memberPhoto!.isNotEmpty) ...[
-                        SizedBox(width: 8.w),
-                        Container(
-                          width: 65.w,
-                          height: 65.h,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(6.r),
-                            child: CachedNetworkImage(
-                              imageUrl: data.memberPhoto!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF1E3A8A),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Icon(
-                                Icons.person,
-                                color: const Color(0xFF1E3A8A),
-                                size: 30.sp,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
                 ],
-              ),
+              ],
             ),
           ],
         ),
@@ -883,35 +856,240 @@ class _ActionCardState extends State<_ActionCard> {
   }
 }
 
-// ─── Wave Painter (UNCHANGED) ─────────────────────────────────────────────────
+class _SummerAdDialog extends StatelessWidget {
+  final VoidCallback onClose;
+  final VoidCallback onOpenMap;
 
-class _WavePainter extends CustomPainter {
+  const _SummerAdDialog({required this.onClose, required this.onOpenMap});
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF0F1F4A).withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final dialogWidth = screenSize.width - 20.w;
 
-    final path = Path();
-    path.moveTo(0, size.height * 0.3);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.1,
-      size.width * 0.5,
-      size.height * 0.3,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: dialogWidth > 560 ? 560.0 : dialogWidth,
+        maxHeight: screenSize.height - 36.h,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onOpenMap,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18.r),
+              child: Image.asset(
+                AppAssets.medicardSummerPopup,
+                width: double.infinity,
+                height: screenSize.height - 36.h,
+                fit: BoxFit.contain,
+                cacheWidth: 1080,
+                errorBuilder: (context, error, stackTrace) {
+                  debugPrint('Summer popup image error: $error');
+                  return Container(
+                    height: 420.h,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18.r),
+                    ),
+                    child: const Icon(Icons.broken_image_outlined, size: 48),
+                  );
+                },
+              ),
+            ),
+          ),
+          PositionedDirectional(
+            top: 10.h,
+            end: 10.w,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.5),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onClose,
+                child: SizedBox(
+                  width: 36.w,
+                  height: 36.w,
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 22.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
-    path.quadraticBezierTo(
-      size.width * 0.75,
-      size.height * 0.5,
-      size.width,
-      size.height * 0.3,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    canvas.drawPath(path, paint);
   }
+}
+
+class _SummerOfferDialog extends StatelessWidget {
+  final VoidCallback onClose;
+  final ValueChanged<int> onTypeSelected;
+
+  const _SummerOfferDialog({
+    required this.onClose,
+    required this.onTypeSelected,
+  });
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final dialogWidth = screenSize.width - 28.w;
+    final maxDialogWidth = dialogWidth > 520 ? 520.0 : dialogWidth;
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: maxDialogWidth,
+        maxHeight: screenSize.height - 48.h,
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: maxDialogWidth,
+            padding: EdgeInsets.fromLTRB(18.w, 26.h, 18.w, 22.h),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.22),
+                  blurRadius: 30,
+                  offset: Offset(0, 16.h),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 66.w,
+                  height: 66.w,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFEFF3F8),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.near_me_rounded,
+                    size: 34.sp,
+                    color: const Color(0xFF164673),
+                  ),
+                ),
+                SizedBox(height: 18.h),
+                Text(
+                  'خريطة المصيف',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF10233B),
+                  ),
+                ),
+                SizedBox(height: 10.h),
+                Text(
+                  'اختر أقرب منطقة مصيفية لعرض شبكة مقدمي الخدمة مباشرة',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    height: 1.45,
+                    color: const Color(0xFF667085),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                _SummerTypeButton(
+                  label: 'الساحل الشمالي',
+                  type: 0,
+                  onSelected: onTypeSelected,
+                ),
+                SizedBox(height: 10.h),
+                _SummerTypeButton(
+                  label: 'مرسى مطروح',
+                  type: 1,
+                  onSelected: onTypeSelected,
+                ),
+                SizedBox(height: 10.h),
+                _SummerTypeButton(
+                  label: 'الإسكندرية',
+                  type: 2,
+                  onSelected: onTypeSelected,
+                ),
+              ],
+            ),
+          ),
+          PositionedDirectional(
+            top: 10.h,
+            end: 10.w,
+            child: Material(
+              color: const Color(0xFFF3F6FA),
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onClose,
+                child: SizedBox(
+                  width: 34.w,
+                  height: 34.w,
+                  child: Icon(
+                    Icons.close_rounded,
+                    color: const Color(0xFF10233B),
+                    size: 20.sp,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SummerTypeButton extends StatelessWidget {
+  final String label;
+  final int type;
+  final ValueChanged<int> onSelected;
+
+  const _SummerTypeButton({
+    required this.label,
+    required this.type,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 58.h,
+      child: Material(
+        color: const Color(0xFFF4F7FA),
+        borderRadius: BorderRadius.circular(14.r),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14.r),
+          onTap: () => onSelected(type),
+          child: Container(
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14.r),
+              border: Border.all(color: const Color(0xFFD6DEE8)),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF164673),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
