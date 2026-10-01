@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/api_result.dart';
 import '../../core/constants/constants.dart';
 import '../../core/helpers/shared_pref_helper.dart';
+import '../../core/services/session_service.dart';
 import '../../data/card_login_request_model.dart';
 import '../../domain/usecases/login_card_usecase.dart';
 import 'medicard_login_state.dart';
@@ -28,6 +29,7 @@ class MedicardLoginCubit extends Cubit<MedicardLoginState> {
       result.when(
         success: (response) async {
           await SharedPrefHelper.setData(SharedPrefKeys.medicardCardNo, cardNo);
+          await SessionService.exitGuest();
           emit(MedicardLoginState.success(response));
         },
         failure: (message) {

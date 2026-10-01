@@ -10,6 +10,7 @@ import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
 import '../core/di/service_locator.dart';
 import '../core/helpers/shared_pref_helper.dart';
+import '../core/services/session_service.dart';
 import '../core/theming/app_toast.dart';
 import '../data/card_home_info_response_model.dart';
 import '../data/card_personal_info_response_model.dart';
@@ -37,6 +38,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
+  bool _isGuest = false;
 
   @override
   void initState() {
@@ -52,14 +54,37 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
-    if (widget.cardNo != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final lang = context.locale.languageCode;
-        context.read<MedicardHomeCubit>().getHomeInfo(
-          cardNo: widget.cardNo!,
-          lang: lang,
-        );
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadGuestAndFetch();
+    });
+  }
+
+  Future<void> _loadGuestAndFetch() async {
+    final guest = await SessionService.isGuest();
+    if (!mounted) return;
+    setState(() => _isGuest = guest);
+    final lang = context.locale.languageCode;
+    if (widget.cardNo != null && widget.cardNo!.isNotEmpty) {
+      context.read<MedicardHomeCubit>().getHomeInfo(
+        cardNo: widget.cardNo!,
+        lang: lang,
+      );
+    } else if (guest) {
+      // Guest uses the existing getHomeInfo flow without a CardNo;
+      // the repository returns the guest sentinel.
+      context.read<MedicardHomeCubit>().getHomeInfo(cardNo: '', lang: lang);
+    }
+  }
+
+  Future<void> _reloadHome() async {
+    final lang = context.locale.languageCode;
+    if (widget.cardNo != null && widget.cardNo!.isNotEmpty) {
+      context.read<MedicardHomeCubit>().getHomeInfo(
+        cardNo: widget.cardNo!,
+        lang: lang,
+      );
+    } else if (_isGuest) {
+      context.read<MedicardHomeCubit>().getHomeInfo(cardNo: '', lang: lang);
     }
   }
 
@@ -333,15 +358,45 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  'MediCard',
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 0.4,
-                    height: 1.1,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'MediCard',
+                      style: TextStyle(
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.4,
+                        height: 1.1,
+                      ),
+                    ),
+                    if (_isGuest) ...[
+                      SizedBox(width: 8.w),
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 3.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8.r),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          'medicard_home.guest_badge'.tr(),
+                          style: TextStyle(
+                            fontSize: 10.sp,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 Text(
                   'medicard_registration.card_subtitle'.tr(),
@@ -361,15 +416,11 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
               final newLocale = isArabic
                   ? const Locale('en')
                   : const Locale('ar');
-              final cubit = context.read<MedicardHomeCubit>();
 
               await context.setLocale(newLocale);
 
-              if (mounted && widget.cardNo != null) {
-                cubit.getHomeInfo(
-                  cardNo: widget.cardNo!,
-                  lang: newLocale.languageCode,
-                );
+              if (mounted) {
+                _reloadHome();
               }
             },
             child: Container(
@@ -447,9 +498,23 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                       ),
                     ),
                     // Card (overlapping the arc)
+                    // Guest guard: tapping the card never opens
+                    // /medicard-my-card or edit-profile for guests.
+                    // Guests are sent to the selection page (login hub).
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      child: _buildMediCard(homeData),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_isGuest) {
+                            context.push('/medicard');
+                            return;
+                          }
+                          if (personalData != null) {
+                            _openMyCard(personalData);
+                          }
+                        },
+                        child: _buildMediCard(homeData),
+                      ),
                     ),
                   ],
                 ),
@@ -624,10 +689,47 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                             color: Color(0xFF1E3A8A),
                           ),
                         ),
-                        errorWidget: (context, url, error) => Icon(
-                          Icons.person,
-                          color: const Color(0xFF1E3A8A),
-                          size: 30.sp,
+                        errorWidget: (context, url, error) {
+                          // Guest only: show logo fallback.
+                          // Auth keeps the original person icon.
+                          if (_isGuest) {
+                            return Padding(
+                              padding: EdgeInsets.all(8.w),
+                              child: Image.asset(
+                                AppAssets.mediLogo,
+                                fit: BoxFit.contain,
+                              ),
+                            );
+                          }
+                          return Icon(
+                            Icons.person,
+                            color: const Color(0xFF1E3A8A),
+                            size: 30.sp,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ] else if (_isGuest) ...[
+                  // Guest mode only: sentinel has memberPhoto "",
+                  // show the logo instead of leaving the slot empty.
+                  // Auth with no photo keeps the original behavior (no box).
+                  SizedBox(width: 8.w),
+                  Container(
+                    width: 65.w,
+                    height: 65.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.r),
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6.r),
+                      child: Padding(
+                        padding: EdgeInsets.all(8.w),
+                        child: Image.asset(
+                          AppAssets.mediLogo,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -643,7 +745,51 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
   // ─── Quick Actions ────────────────────────────────────────────────────────
 
+  Future<void> _openMyCard(CardPersonalInfoDataModel personalData) async {
+    final cubit = context.read<MedicardHomeCubit>();
+    final lang = context.locale.languageCode;
+
+    final result = await context.push(
+      '/medicard-my-card',
+      extra: {'personalData': personalData, 'cardNo': widget.cardNo},
+    );
+
+    if (result == true && context.mounted && widget.cardNo != null) {
+      cubit.getHomeInfo(cardNo: widget.cardNo!, lang: lang);
+    }
+  }
+
   Widget _buildQuickActions(CardPersonalInfoDataModel? personalData) {
+    final profileAction = _isGuest
+        ? {
+            'icon': Icons.login_rounded,
+            'title': 'medicard_home.guest_login_title'.tr(),
+            'subtitle': 'medicard_home.guest_login_subtitle'.tr(),
+            'color': const Color(0xFF7C3AED),
+            'bgColor': const Color(0xFFF3EDFF),
+            // Guests go to the selection page (activate / login / buy).
+            'onTap': () => context.push('/medicard'),
+          }
+        : {
+            'icon': Icons.badge_rounded,
+            'title': 'profile.title'.tr(),
+            'subtitle': 'profile.personal_information'.tr(),
+            'color': const Color(0xFF7C3AED),
+            'bgColor': const Color(0xFFF3EDFF),
+            // ✅ _buildQuickActions fix
+            'onTap': () async {
+              if (_isGuest) {
+                if (context.mounted) context.push('/medicard');
+                return;
+              }
+              if (personalData != null) {
+                await _openMyCard(personalData);
+              } else {
+                showErrorToast('medicard_home.no_personal_data'.tr());
+              }
+            },
+          };
+
     final actions = [
       {
         'icon': Icons.local_hospital_rounded,
@@ -661,31 +807,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
         'bgColor': const Color(0xFFFFF8E6),
         'onTap': () => context.push('/medicard-support'),
       },
-      {
-        'icon': Icons.badge_rounded,
-        'title': 'profile.title'.tr(),
-        'subtitle': 'profile.personal_information'.tr(),
-        'color': const Color(0xFF7C3AED),
-        'bgColor': const Color(0xFFF3EDFF),
-        // ✅ _buildQuickActions fix
-        'onTap': () async {
-          if (personalData != null) {
-            final cubit = context.read<MedicardHomeCubit>();
-            final lang = context.locale.languageCode;
-
-            final result = await context.push(
-              '/medicard-my-card',
-              extra: {'personalData': personalData, 'cardNo': widget.cardNo},
-            );
-
-            if (result == true && context.mounted && widget.cardNo != null) {
-              cubit.getHomeInfo(cardNo: widget.cardNo!, lang: lang);
-            }
-          } else {
-            showErrorToast('medicard_home.no_personal_data'.tr());
-          }
-        },
-      },
+      profileAction,
     ];
 
     return Column(

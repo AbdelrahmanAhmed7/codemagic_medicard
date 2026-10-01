@@ -6,6 +6,7 @@ import '../../data/card_personal_info_response_model.dart';
 import '../../domain/usecases/get_home_info_usecase.dart';
 import '../../domain/usecases/get_personal_info_usecase.dart';
 import '../../domain/usecases/get_top_providers_slider_usecase.dart';
+import '../../core/services/session_service.dart';
 import '../../network/data/top_providers_slider_model.dart';
 import 'medicard_home_state.dart';
 
@@ -24,6 +25,40 @@ class MedicardHomeCubit extends Cubit<MedicardHomeState> {
     required String cardNo,
     required String lang,
   }) async {
+    // Guest path: reuse the existing getHomeInfo flow (sentinel comes from
+    // the repository) but never call GetPersonalInfo. personalData stays null.
+    if (await SessionService.isGuest()) {
+      emit(const MedicardHomeState.loading());
+
+      try {
+        final homeInfoResult = await _getHomeInfoUseCase.call(cardNo, lang);
+        final sliderResult = await _getTopProvidersForSliderUseCase.call(lang);
+
+        homeInfoResult.when(
+          success: (homeInfoResponse) {
+            final sliderInfo = sliderResult.when(
+              success: (data) => data,
+              failure: (_) => null,
+            );
+
+            emit(
+              MedicardHomeState.success(
+                homeInfo: homeInfoResponse,
+                personalInfo: null,
+                sliderInfo: sliderInfo,
+              ),
+            );
+          },
+          failure: (message) {
+            emit(MedicardHomeState.failed(error: message));
+          },
+        );
+      } catch (e) {
+        emit(MedicardHomeState.failed(error: e.toString()));
+      }
+      return;
+    }
+
     emit(const MedicardHomeState.loading());
 
     try {

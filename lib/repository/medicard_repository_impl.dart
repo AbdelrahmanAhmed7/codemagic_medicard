@@ -1,8 +1,11 @@
 import 'dart:io';
+
 import 'package:dio/dio.dart';
+
+import '../core/cache/cache_service.dart';
 import '../core/constants/api_result.dart';
 import '../core/network/api_error_handler.dart';
-import '../core/cache/cache_service.dart';
+import '../core/services/session_service.dart';
 import '../data/card_activate_request_model.dart';
 import '../data/card_activate_response_model.dart';
 import '../data/card_home_info_response_model.dart';
@@ -90,6 +93,25 @@ class MedicardRepositoryImpl implements MedicardRepository {
     String cardNo,
     String lang,
   ) async {
+    // Guest mode: no CardNo is sent and no network call is made.
+    // Return the agreed sentinel with success=true.
+    if (cardNo.isEmpty || await SessionService.isGuest()) {
+      final now = DateTime.now();
+      return ApiResult.success(
+        CardHomeInfoResponseModel(
+          success: true,
+          timestamp: now.toIso8601String(),
+          message: 'Guest mode',
+          data: CardHomeInfoDataModel(
+            cardId: '000000000000',
+            firstName: 'Guest',
+            lastName: ' ',
+            expireDate: now.toIso8601String(),
+            memberPhoto: '',
+          ),
+        ),
+      );
+    }
     try {
       final response = await _apiService.getHomeInfo(lang, cardNo);
 
@@ -205,5 +227,4 @@ class MedicardRepositoryImpl implements MedicardRepository {
       return ApiResult.failure(ErrorHandler.handle(error));
     }
   }
-
 }

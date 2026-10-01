@@ -5,10 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/constants/constants.dart';
 import '../core/constants/legal_urls.dart';
 import '../core/di/service_locator.dart';
-import '../core/helpers/shared_pref_helper.dart';
+import '../core/services/session_service.dart';
 import '../core/services/url_launcher_service.dart';
 import '../core/theming/app_text_styles.dart';
 import 'widgets/legal_links_row.dart';
@@ -582,8 +581,7 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
   }
 
   Future<void> _clearLocalSession() async {
-    await SharedPrefHelper.removeData(SharedPrefKeys.medicardCardNo);
-    await SharedPrefHelper.clearAllSecuredData();
+    await SessionService.clearAll();
   }
 
   Widget _buildLogoutButton(BuildContext context) {

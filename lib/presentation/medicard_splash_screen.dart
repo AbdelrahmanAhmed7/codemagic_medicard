@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 import '../core/constants/app_assets.dart';
 import '../core/constants/constants.dart';
 import '../core/helpers/shared_pref_helper.dart';
+import '../core/services/session_service.dart';
 
 class MedicardSplashScreen extends StatefulWidget {
   const MedicardSplashScreen({super.key});
@@ -57,13 +58,10 @@ class _MedicardSplashScreenState extends State<MedicardSplashScreen> {
     final cardNo = await SharedPrefHelper.getString(
       SharedPrefKeys.medicardCardNo,
     );
+    final guest = await SessionService.isGuest();
 
     if (!mounted) return;
-    if (cardNo.isNotEmpty) {
-      context.go('/medicard-home?cardNo=$cardNo');
-    } else {
-      context.go('/medicard');
-    }
+    context.go(SessionService.resolveSplashRoute(cardNo: cardNo, isGuest: guest));
   }
 
   @override

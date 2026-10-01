@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_assets.dart';
 import '../core/di/service_locator.dart';
+import '../core/services/session_service.dart';
 import '../core/services/url_launcher_service.dart';
 import '../core/theming/app_colors.dart';
 import '../core/theming/app_text_styles.dart';
@@ -124,6 +125,24 @@ class MedicardSelectionScreen extends StatelessWidget {
                               icon: Icons.shopping_cart_checkout_rounded,
                               color: const Color(0xFF10B981),
                               onTap: () => _showBuyDialog(context),
+                            ),
+                            SizedBox(height: 12.h),
+                            TextButton(
+                              onPressed: () async {
+                                await SessionService.enterGuest();
+                                if (context.mounted) {
+                                  context.go('/medicard-home');
+                                }
+                              },
+                              child: Text(
+                                'medicard_selection.continue_as_guest'.tr(),
+                                style: TextStyle(
+                                  fontSize: 14.sp,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1E3A8A),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
                             ),
 
                             // Khusm Logo at bottom

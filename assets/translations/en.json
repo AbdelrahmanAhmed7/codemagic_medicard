@@ -906,7 +906,10 @@
     "lab_category": "Lab",
     "optical_category": "Optical",
     "hospital_category": "Hospital",
-    "no_personal_data": "No personal data available at the moment"
+    "no_personal_data": "No personal data available at the moment",
+    "guest_badge": "Guest",
+    "guest_login_title": "Log in",
+    "guest_login_subtitle": "Log in to manage your card"
   },
   "medicard_support": {
     "title": "Technical Support",
@@ -945,7 +948,8 @@
       "whatsapp": "WhatsApp",
       "website": "Website",
       "email": "Email"
-    }
+    },
+    "continue_as_guest": "Continue as Guest"
   },
   "medicard_edit_profile": {
     "title": "Edit Profile",

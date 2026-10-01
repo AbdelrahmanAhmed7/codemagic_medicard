@@ -900,7 +900,10 @@
     "lab_category": "معمل",
     "optical_category": "نظارات",
     "hospital_category": "مستشفى",
-    "no_personal_data": "لا توجد بيانات شخصية متاحة حالياً"
+    "no_personal_data": "لا توجد بيانات شخصية متاحة حالياً",
+    "guest_badge": "ضيف",
+    "guest_login_title": "تسجيل الدخول",
+    "guest_login_subtitle": "سجّل الدخول لإدارة بطاقتك"
   },
   "medicard_support": {
     "title": "الدعم الفني",
@@ -939,7 +942,8 @@
       "whatsapp": "واتساب",
       "website": "الموقع الإلكتروني",
       "email": "البريد الإلكتروني"
-    }
+    },
+    "continue_as_guest": "المتابعة كضيف"
   },
   "medicard_edit_profile": {
     "title": "تعديل الملف الشخصي",

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/api_result.dart';
 import '../../core/constants/constants.dart';
 import '../../core/helpers/shared_pref_helper.dart';
+import '../../core/services/session_service.dart';
 import '../../data/card_activate_request_model.dart';
 import '../../domain/usecases/activate_card_usecase.dart';
 import 'medicard_activation_state.dart';
@@ -52,6 +53,7 @@ class MedicardActivationCubit extends Cubit<MedicardActivationState> {
         success: (response) async {
           // ✅ حفظ cardNo في SharedPreferences للـ session
           await SharedPrefHelper.setData(SharedPrefKeys.medicardCardNo, cardNo);
+          await SessionService.exitGuest();
           emit(MedicardActivationState.success(response));
         },
         failure: (message) {
