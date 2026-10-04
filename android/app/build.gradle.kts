@@ -9,9 +9,7 @@ plugins {
 
 val keyPropertiesFile = rootProject.file("key.properties")
 val keyProperties = Properties()
-if (keyPropertiesFile.exists()) {
-    keyProperties.load(FileInputStream(keyPropertiesFile))
-}
+keyProperties.load(FileInputStream(keyPropertiesFile))
 
 android {
     namespace = "com.khusm.medicard"
@@ -37,14 +35,10 @@ android {
 
     signingConfigs {
         create("release") {
-            // key.properties is gitignored and only exists on signing machines.
-            // Guard against null so configuration doesn't crash without it.
-            if (keyPropertiesFile.exists()) {
-                keyAlias = keyProperties["keyAlias"] as String
-                keyPassword = keyProperties["keyPassword"] as String
-                storeFile = file(keyProperties["storeFile"] as String)
-                storePassword = keyProperties["storePassword"] as String
-            }
+            keyAlias = keyProperties.getProperty("keyAlias")
+            keyPassword = keyProperties.getProperty("keyPassword")
+            storeFile = file(keyProperties.getProperty("storeFile"))
+            storePassword = keyProperties.getProperty("storePassword")
         }
     }
 
