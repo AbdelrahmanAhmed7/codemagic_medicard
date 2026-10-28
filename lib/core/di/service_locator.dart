@@ -9,6 +9,8 @@ import '../../domain/usecases/get_support_contacts_usecase.dart';
 import '../../domain/usecases/get_top_providers_slider_usecase.dart';
 import '../../domain/usecases/login_card_usecase.dart';
 import '../../domain/usecases/update_profile_usecase.dart';
+import '../../invoices/repository/invoice_repository.dart';
+import '../../invoices/service/invoice_api_service.dart';
 import '../../medicard_network/logic/medicard_network_cubit.dart';
 import '../../medicard_network/repository/medicard_network_repository.dart';
 import '../../medicard_network/service/medicard_network_api_service.dart';
@@ -27,6 +29,11 @@ final GetIt sl = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
   final Dio medicardDio = await DioFactory.getDioForMedicard();
+  final Dio invoiceDio = Dio()
+    ..options.connectTimeout = const Duration(seconds: 30)
+    ..options.receiveTimeout = const Duration(seconds: 30)
+    ..options.sendTimeout = const Duration(seconds: 30)
+    ..options.headers = {'Accept': 'application/json'};
 
   sl.registerLazySingleton<MedicardApiService>(
     () => MedicardApiService(medicardDio),
@@ -41,6 +48,10 @@ Future<void> setupServiceLocator() async {
   sl.registerLazySingleton<MedicardNetworkRepository>(
     () => MedicardNetworkRepository(sl()),
   );
+  sl.registerLazySingleton<InvoiceApiService>(
+    () => InvoiceApiService(invoiceDio),
+  );
+  sl.registerLazySingleton<InvoiceRepository>(() => InvoiceRepository(sl()));
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerLazySingleton<UrlLauncherService>(() => UrlLauncherService());
 
