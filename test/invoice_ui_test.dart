@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:medicard/core/di/service_locator.dart';
@@ -147,6 +148,7 @@ Future<void> pumpScreen(
   String lang = 'en',
   Size size = const Size(375, 812),
   double textScale = 1,
+  GoRouter? router,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
@@ -163,23 +165,41 @@ Future<void> pumpScreen(
       child: Builder(
         builder: (context) => ScreenUtilInit(
           designSize: ResponsiveScreenUtil.adaptiveDesignSize(size),
-          builder: (_, _) => MaterialApp(
-            debugShowCheckedModeBanner: false,
-            locale: context.locale,
-            supportedLocales: context.supportedLocales,
-            localizationsDelegates: context.localizationDelegates,
-            theme: ThemeData(
-              fontFamily: lang == 'ar' ? 'Cairo' : 'Roboto',
-              useMaterial3: true,
-            ),
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: TextScaler.linear(textScale)),
-              child: child!,
-            ),
-            home: RepaintBoundary(key: previewKey, child: screen),
-          ),
+          builder: (_, _) => router == null
+              ? MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  locale: context.locale,
+                  supportedLocales: context.supportedLocales,
+                  localizationsDelegates: context.localizationDelegates,
+                  theme: ThemeData(
+                    fontFamily: lang == 'ar' ? 'Cairo' : 'Roboto',
+                    useMaterial3: true,
+                  ),
+                  builder: (context, child) => MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(textScaler: TextScaler.linear(textScale)),
+                    child: child!,
+                  ),
+                  home: RepaintBoundary(key: previewKey, child: screen),
+                )
+              : MaterialApp.router(
+                  debugShowCheckedModeBanner: false,
+                  locale: context.locale,
+                  supportedLocales: context.supportedLocales,
+                  localizationsDelegates: context.localizationDelegates,
+                  theme: ThemeData(
+                    fontFamily: lang == 'ar' ? 'Cairo' : 'Roboto',
+                    useMaterial3: true,
+                  ),
+                  builder: (context, child) => MediaQuery(
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(textScaler: TextScaler.linear(textScale)),
+                    child: child!,
+                  ),
+                  routerConfig: router,
+                ),
         ),
       ),
     ),
@@ -231,14 +251,25 @@ void main() {
     'request requires provider, branch and details before submission',
     (tester) async {
       final repository = FakeInvoices();
-      await pumpScreen(
-        tester,
-        Scaffold(
-          backgroundColor: const Color(0xFFF3F6FA),
-          appBar: AppBar(title: const Text('New request')),
-          body: InvoiceCreateForm(cardNo: '123', repository: repository),
-        ),
+      final form = Scaffold(
+        backgroundColor: const Color(0xFFF3F6FA),
+        appBar: AppBar(title: const Text('New request')),
+        body: InvoiceCreateForm(cardNo: '123', repository: repository),
       );
+      final router = GoRouter(
+        initialLocation: '/form',
+        routes: [
+          GoRoute(path: '/form', builder: (_, _) => form),
+          GoRoute(
+            path: '/medicard-invoices/history',
+            builder: (_, state) => Scaffold(
+              body: Text('My invoices ${state.uri.queryParameters['cardNo']}'),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await pumpScreen(tester, form, router: router);
       await preview(tester, 'request-en');
       await tester.scrollUntilVisible(
         find.byType(FilledButton),
@@ -280,14 +311,20 @@ void main() {
       await tester.ensureVisible(find.byType(FilledButton));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(FilledButton));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(repository.creates, 1);
-      await tester.drag(find.byType(ListView).first, const Offset(0, 1600));
-      await tester.pumpAndSettle();
+      expect(find.byType(Dialog), findsOneWidget);
+      expect(
+        find.textContaining('submitted successfully'),
+        findsOneWidget,
+      );
       expect(find.text('Request #42'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      await tester.pump(const Duration(seconds: 4));
+      expect(find.byType(SnackBar), findsNothing);
+      await tester.pump(const Duration(milliseconds: 1500));
       await tester.pumpAndSettle();
+      expect(find.text('My invoices 123'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     },
   );
 

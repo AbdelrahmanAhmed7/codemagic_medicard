@@ -39,7 +39,6 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   XFile? _attachment;
   bool _isSubmitting = false;
   bool _isLoadingInitialProvider = false;
-  CreatedInvoice? _submittedInvoice;
 
   String get _lang => context.locale.languageCode;
 
@@ -108,6 +107,8 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final branch = await _showPagedPicker<InvoiceBranch>(
       title: 'invoice.choose_branch'.tr(),
       allowSearch: false,
+      titleFontSize: 16,
+      subtitleFontSize: 13,
       loadPage: (_, page) => widget.repository.getProviderBranches(
         lang: _lang,
         providerId: provider.providerId,
@@ -136,6 +137,8 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     required Future<InvoicePage<T>> Function(String query, int page) loadPage,
     required String Function(T item) titleOf,
     required String Function(T item) subtitleOf,
+    double titleFontSize = 13,
+    double subtitleFontSize = 10,
     Widget Function(T item)? leadingBuilder,
     bool Function(T item)? isSelected,
   }) {
@@ -154,6 +157,8 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         loadPage: loadPage,
         titleOf: titleOf,
         subtitleOf: subtitleOf,
+        titleFontSize: titleFontSize,
+        subtitleFontSize: subtitleFontSize,
         leadingBuilder: leadingBuilder,
         isSelected: isSelected,
       ),
@@ -199,21 +204,68 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
       if (!mounted) return;
       _notesController.clear();
       setState(() {
-        _submittedInvoice = created;
         _provider = null;
         _branch = null;
         _attachment = null;
       });
-      showAppSnackBar(
-        context,
-        'invoice.created_successfully'.tr(),
-        type: SnackBarType.success,
-      );
+      await _showSuccessAndOpenInvoices(created);
     } catch (error) {
       if (mounted) _showError(error);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
+  }
+
+  Future<void> _showSuccessAndOpenInvoices(CreatedInvoice invoice) async {
+    final dialog = showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Dialog(
+        insetPadding: EdgeInsets.symmetric(horizontal: 32.w),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24.r),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFF15803D),
+                size: 56,
+              ),
+              SizedBox(height: 12.h),
+              Text(
+                'invoice.created_successfully'.tr(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                'invoice.request_number'.tr(args: [invoice.id.toString()]),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 1500));
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    await dialog;
+    if (!mounted) return;
+    context.go(
+      Uri(
+        path: '/medicard-invoices/history',
+        queryParameters: {'cardNo': widget.cardNo},
+      ).toString(),
+    );
   }
 
   void _showError(Object error) {
@@ -245,47 +297,6 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
             28.h + MediaQuery.of(context).padding.bottom,
           ),
           children: [
-            if (_submittedInvoice != null) ...[
-              Container(
-                padding: EdgeInsets.all(18.w),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: Color(0xFF15803D),
-                      size: 32,
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      'invoice.created_successfully'.tr(),
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF166534),
-                      ),
-                    ),
-                    Text(
-                      'invoice.request_number'.tr(
-                        args: [_submittedInvoice!.id.toString()],
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () =>
-                          context.push('/medicard-invoices/history'),
-                      icon: const Icon(Icons.receipt_long_outlined),
-                      label: Text('invoice.view_requests'.tr()),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 14.h),
-            ],
             Container(
               padding: EdgeInsets.all(18.w),
               decoration: BoxDecoration(
@@ -905,6 +916,8 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
   final Future<InvoicePage<T>> Function(String query, int page) loadPage;
   final String Function(T item) titleOf;
   final String Function(T item) subtitleOf;
+  final double titleFontSize;
+  final double subtitleFontSize;
   final Widget Function(T item)? leadingBuilder;
   final bool Function(T item)? isSelected;
 
@@ -915,6 +928,8 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
     required this.loadPage,
     required this.titleOf,
     required this.subtitleOf,
+    required this.titleFontSize,
+    required this.subtitleFontSize,
     this.leadingBuilder,
     this.isSelected,
   });
@@ -1188,7 +1203,7 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 13.sp,
+                                        fontSize: widget.titleFontSize.sp,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF0F172A),
                                       ),
@@ -1200,7 +1215,7 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
-                                          fontSize: 10.sp,
+                                          fontSize: widget.subtitleFontSize.sp,
                                           height: 1.35,
                                           color: const Color(0xFF64748B),
                                         ),
