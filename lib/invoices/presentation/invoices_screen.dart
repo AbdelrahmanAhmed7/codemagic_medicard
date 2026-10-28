@@ -51,14 +51,6 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     backgroundColor: const Color(0xFFF3F6FA),
     appBar: AppBar(
       title: Text('invoice.title'.tr()),
-      actions: [
-        TextButton.icon(
-          onPressed: () => context.push('/medicard-invoices/history'),
-          icon: const Icon(Icons.receipt_long_outlined),
-          label: Text('invoice.my_invoices'.tr()),
-        ),
-        SizedBox(width: 8.w),
-      ],
     ),
     body: FutureBuilder<String>(
       future: _cardNoFuture,
