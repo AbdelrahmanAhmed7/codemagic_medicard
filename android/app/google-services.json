@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "954601038431",
+    "project_id": "medicard-181a4",
+    "storage_bucket": "medicard-181a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:954601038431:android:9f8b8d9d0bbee150a831ea",
+        "android_client_info": {
+          "package_name": "com.khusm.medicard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAt5d5bWXPTkY39vrRLnbku8optABaNIdU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,15 +1,19 @@
 import java.util.Properties
-import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
 val keyPropertiesFile = rootProject.file("key.properties")
 val keyProperties = Properties()
-keyProperties.load(FileInputStream(keyPropertiesFile))
+if (keyPropertiesFile.exists()) {
+    keyPropertiesFile.inputStream().use(keyProperties::load)
+}
 
 android {
     namespace = "com.khusm.medicard"
@@ -17,6 +21,7 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -34,11 +39,21 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keyProperties.getProperty("keyAlias")
-            keyPassword = keyProperties.getProperty("keyPassword")
-            storeFile = file(keyProperties.getProperty("storeFile"))
-            storePassword = keyProperties.getProperty("storePassword")
+        if (keyPropertiesFile.exists()) {
+            create("release") {
+                val requiredProperties = listOf("keyAlias", "keyPassword", "storeFile", "storePassword")
+                val missingProperties = requiredProperties.filter {
+                    keyProperties.getProperty(it).isNullOrBlank()
+                }
+                require(missingProperties.isEmpty()) {
+                    "Missing ${missingProperties.joinToString()} in android/key.properties"
+                }
+
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+            }
         }
     }
 
@@ -62,6 +77,7 @@ flutter {
 }
 
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Google Play Services Location — for SettingsClient / ResolvableApiException
     implementation("com.google.android.gms:play-services-location:21.3.0")
 }

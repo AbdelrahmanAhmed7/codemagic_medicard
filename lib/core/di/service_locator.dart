@@ -14,6 +14,8 @@ import '../../invoices/service/invoice_api_service.dart';
 import '../../medicard_network/logic/medicard_network_cubit.dart';
 import '../../medicard_network/repository/medicard_network_repository.dart';
 import '../../medicard_network/service/medicard_network_api_service.dart';
+import '../../notifications/service/firebase_messaging_token_service.dart';
+import '../../notifications/service/firebase_token_api_service.dart';
 import '../../presentation/logic/medicard_activation_cubit.dart';
 import '../../presentation/logic/medicard_edit_profile_cubit.dart';
 import '../../presentation/logic/medicard_home_cubit.dart';
@@ -52,6 +54,12 @@ Future<void> setupServiceLocator() async {
     () => InvoiceApiService(invoiceDio),
   );
   sl.registerLazySingleton<InvoiceRepository>(() => InvoiceRepository(sl()));
+  sl.registerLazySingleton<FirebaseTokenApiService>(
+    () => FirebaseTokenApiService(medicardDio),
+  );
+  sl.registerLazySingleton<FirebaseMessagingTokenService>(
+    () => FirebaseMessagingTokenService(sl()),
+  );
   sl.registerLazySingleton<LocationService>(() => LocationService());
   sl.registerLazySingleton<UrlLauncherService>(() => UrlLauncherService());
 
@@ -59,7 +67,9 @@ Future<void> setupServiceLocator() async {
   sl.registerFactory<ActivateCardUseCase>(() => ActivateCardUseCase(sl()));
   sl.registerFactory<LoginCardUseCase>(() => LoginCardUseCase(sl()));
   sl.registerFactory<GetHomeInfoUseCase>(() => GetHomeInfoUseCase(sl()));
-  sl.registerFactory<GetPersonalInfoUseCase>(() => GetPersonalInfoUseCase(sl()));
+  sl.registerFactory<GetPersonalInfoUseCase>(
+    () => GetPersonalInfoUseCase(sl()),
+  );
   sl.registerFactory<GetSupportContactsUseCase>(
     () => GetSupportContactsUseCase(sl()),
   );
@@ -72,7 +82,9 @@ Future<void> setupServiceLocator() async {
   sl.registerFactory<MedicardActivationCubit>(
     () => MedicardActivationCubit(sl()),
   );
-  sl.registerFactory<MedicardLoginCubit>(() => MedicardLoginCubit(sl()));
+  sl.registerFactory<MedicardLoginCubit>(
+    () => MedicardLoginCubit(sl(), sl<FirebaseMessagingTokenService>()),
+  );
   sl.registerFactory<MedicardHomeCubit>(
     () => MedicardHomeCubit(sl(), sl(), sl()),
   );

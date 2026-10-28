@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theming/app_snack_bar.dart';
 import '../data/invoice_models.dart';
@@ -38,6 +39,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   XFile? _attachment;
   bool _isSubmitting = false;
   bool _isLoadingInitialProvider = false;
+  CreatedInvoice? _submittedInvoice;
 
   String get _lang => context.locale.languageCode;
 
@@ -91,6 +93,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
       titleOf: (item) => item.providerName.trim(),
       subtitleOf: (item) => item.categoryName,
       leadingBuilder: (item) => _ProviderLogo(url: item.providerLogo),
+      isSelected: (item) => item.providerId == _provider?.providerId,
     );
     if (provider == null || !mounted) return;
     setState(() {
@@ -118,6 +121,9 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         item.city,
         item.government,
       ].where((part) => part.trim().isNotEmpty).join(' - '),
+      leadingBuilder: (_) =>
+          const _PickerIcon(icon: Icons.location_on_outlined),
+      isSelected: (item) => item.locationId == _branch?.locationId,
     );
     if (branch == null || !mounted) return;
     setState(() => _branch = branch);
@@ -131,6 +137,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     required String Function(T item) titleOf,
     required String Function(T item) subtitleOf,
     Widget Function(T item)? leadingBuilder,
+    bool Function(T item)? isSelected,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -148,6 +155,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         titleOf: titleOf,
         subtitleOf: subtitleOf,
         leadingBuilder: leadingBuilder,
+        isSelected: isSelected,
       ),
     );
   }
@@ -166,6 +174,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
     final provider = _provider;
     final branch = _branch;
     final notes = _notesController.text.trim();
@@ -176,9 +185,10 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
     setState(() => _isSubmitting = true);
     try {
-      await widget.repository.createInvoice(
+      final created = await widget.repository.createInvoice(
         lang: _lang,
         cardNo: widget.cardNo,
         providerId: provider.providerId,
@@ -189,6 +199,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
       if (!mounted) return;
       _notesController.clear();
       setState(() {
+        _submittedInvoice = created;
         _provider = null;
         _branch = null;
         _attachment = null;
@@ -222,146 +233,494 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         (_notesController.text.trim().isNotEmpty || _attachment != null) &&
         !_isSubmitting;
 
-    return ListView(
-      padding: EdgeInsets.fromLTRB(
-        20.w,
-        20.h,
-        20.w,
-        24.h + MediaQuery.of(context).padding.bottom,
-      ),
-      children: [
-        Text(
-          'invoice.create_title'.tr(),
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0F172A),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 760),
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.fromLTRB(
+            16.w,
+            16.h,
+            16.w,
+            28.h + MediaQuery.of(context).padding.bottom,
           ),
-        ),
-        SizedBox(height: 18.h),
-        _RequiredLabel('invoice.provider'.tr()),
-        SizedBox(height: 7.h),
-        _SelectionButton(
-          label:
-              _provider?.providerName.trim() ??
-              (_isLoadingInitialProvider
-                  ? 'common.loading'.tr()
-                  : 'invoice.choose_provider'.tr()),
-          leading: _provider == null
-              ? null
-              : _ProviderLogo(url: _provider!.providerLogo),
-          onTap: _isLoadingInitialProvider ? null : _chooseProvider,
-        ),
-        SizedBox(height: 16.h),
-        _RequiredLabel('invoice.branch'.tr()),
-        SizedBox(height: 7.h),
-        _SelectionButton(
-          label: _branch == null
-              ? 'invoice.choose_branch'.tr()
-              : [
-                  _branch!.branchName,
-                  _branch!.area,
-                  _branch!.city,
-                ].where((part) => part.trim().isNotEmpty).join(' - '),
-          onTap: _provider == null ? null : _chooseBranch,
-        ),
-        SizedBox(height: 16.h),
-        Text(
-          'invoice.notes_or_image_required'.tr(),
-          style: TextStyle(fontSize: 12.sp, color: const Color(0xFF64748B)),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          'invoice.notes'.tr(),
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
-        ),
-        SizedBox(height: 7.h),
-        TextField(
-          controller: _notesController,
-          minLines: 3,
-          maxLines: 5,
-          maxLength: 500,
-          onChanged: (_) => setState(() {}),
-          decoration: InputDecoration(
-            hintText: 'invoice.notes_hint'.tr(),
-            alignLabelWithHint: true,
-            filled: true,
-            fillColor: const Color(0xFFF6F8FB),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14.r),
-            ),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          'invoice.prescription'.tr(),
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
-        ),
-        SizedBox(height: 7.h),
-        Row(
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _pickAttachment(ImageSource.camera),
-                icon: const Icon(Icons.camera_alt_outlined),
-                label: Text('invoice.take_photo'.tr()),
+            if (_submittedInvoice != null) ...[
+              Container(
+                padding: EdgeInsets.all(18.w),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                  borderRadius: BorderRadius.circular(20.r),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Color(0xFF15803D),
+                      size: 32,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'invoice.created_successfully'.tr(),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF166534),
+                      ),
+                    ),
+                    Text(
+                      'invoice.request_number'.tr(
+                        args: [_submittedInvoice!.id.toString()],
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.push('/medicard-invoices/history'),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: Text('invoice.view_requests'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 14.h),
+            ],
+            Container(
+              padding: EdgeInsets.all(18.w),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0F766E), Color(0xFF0E7490)],
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                ),
+                borderRadius: BorderRadius.circular(20.r),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 52.w,
+                    height: 52.w,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(16.r),
+                    ),
+                    child: Icon(
+                      Icons.receipt_long_rounded,
+                      color: Colors.white,
+                      size: 26.sp,
+                    ),
+                  ),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'invoice.create_title'.tr(),
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(height: 4.h),
+                        Text(
+                          'invoice.open_description'.tr(),
+                          style: TextStyle(
+                            fontSize: 11.sp,
+                            height: 1.4,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 10.w),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _pickAttachment(ImageSource.gallery),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: Text('invoice.choose_photo'.tr()),
+            SizedBox(height: 18.h),
+            Wrap(
+              spacing: 8.w,
+              runSpacing: 8.h,
+              children: [
+                _ProgressStep(
+                  number: 1,
+                  label: 'invoice.provider'.tr(),
+                  complete: _provider != null,
+                ),
+                _ProgressStep(
+                  number: 2,
+                  label: 'invoice.branch'.tr(),
+                  complete: _branch != null,
+                ),
+                _ProgressStep(
+                  number: 3,
+                  label: 'invoice.request_details'.tr(),
+                  complete:
+                      _notesController.text.trim().isNotEmpty ||
+                      _attachment != null,
+                ),
+              ],
+            ),
+            SizedBox(height: 18.h),
+            _FormSection(
+              icon: Icons.apartment_rounded,
+              title: 'invoice.provider_and_branch'.tr(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _RequiredLabel('invoice.provider'.tr()),
+                  SizedBox(height: 8.h),
+                  _SelectionButton(
+                    label:
+                        _provider?.providerName.trim() ??
+                        'invoice.choose_provider'.tr(),
+                    supportingText:
+                        _provider?.categoryName ?? 'invoice.provider_hint'.tr(),
+                    leading: _provider == null
+                        ? null
+                        : _ProviderLogo(url: _provider!.providerLogo),
+                    placeholderIcon: Icons.search_rounded,
+                    isLoading: _isLoadingInitialProvider,
+                    isSelected: _provider != null,
+                    onTap: _isLoadingInitialProvider || _isSubmitting
+                        ? null
+                        : _chooseProvider,
+                  ),
+                  SizedBox(height: 16.h),
+                  _RequiredLabel('invoice.branch'.tr()),
+                  SizedBox(height: 8.h),
+                  _SelectionButton(
+                    label: _branch == null
+                        ? 'invoice.choose_branch'.tr()
+                        : _branch!.branchName.trim().isEmpty
+                        ? _branch!.area.trim()
+                        : _branch!.branchName.trim(),
+                    supportingText: _branch == null
+                        ? _provider == null
+                              ? 'invoice.choose_provider_first'.tr()
+                              : 'invoice.branch_hint'.tr()
+                        : [
+                            _branch!.address,
+                            _branch!.city,
+                            _branch!.government,
+                          ].where((part) => part.trim().isNotEmpty).join(' - '),
+                    leading: _branch == null
+                        ? null
+                        : const _PickerIcon(icon: Icons.location_on_outlined),
+                    placeholderIcon: Icons.location_on_outlined,
+                    isSelected: _branch != null,
+                    onTap: _provider == null || _isSubmitting
+                        ? null
+                        : _chooseBranch,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 14.h),
+            _FormSection(
+              icon: Icons.edit_note_rounded,
+              title: 'invoice.request_details'.tr(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'invoice.notes_or_image_required'.tr(),
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      height: 1.4,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'invoice.notes'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  TextField(
+                    controller: _notesController,
+                    enabled: !_isSubmitting,
+                    minLines: 3,
+                    maxLines: 5,
+                    maxLength: 500,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'invoice.notes_hint'.tr(),
+                      alignLabelWithHint: true,
+                      filled: true,
+                      fillColor: const Color(0xFFF8FAFC),
+                      contentPadding: EdgeInsets.all(14.w),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14.r),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF0F766E),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    'invoice.prescription'.tr(),
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF334155),
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _AttachmentAction(
+                          icon: Icons.camera_alt_outlined,
+                          label: 'invoice.take_photo'.tr(),
+                          onTap: _isSubmitting
+                              ? null
+                              : () => _pickAttachment(ImageSource.camera),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: _AttachmentAction(
+                          icon: Icons.photo_library_outlined,
+                          label: 'invoice.choose_photo'.tr(),
+                          onTap: _isSubmitting
+                              ? null
+                              : () => _pickAttachment(ImageSource.gallery),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_attachment != null) ...[
+                    SizedBox(height: 14.h),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(14.r),
+                      child: AspectRatio(
+                        aspectRatio: 16 / 10,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.file(
+                              File(_attachment!.path),
+                              fit: BoxFit.cover,
+                            ),
+                            PositionedDirectional(
+                              top: 10.h,
+                              end: 10.w,
+                              child: Material(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                shape: const CircleBorder(),
+                                child: IconButton(
+                                  onPressed: _isSubmitting
+                                      ? null
+                                      : () =>
+                                            setState(() => _attachment = null),
+                                  color: Colors.white,
+                                  icon: const Icon(Icons.close_rounded),
+                                  tooltip: 'common.delete'.tr(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            SizedBox(height: 18.h),
+            SizedBox(
+              height: 54.h,
+              child: FilledButton(
+                onPressed: canSubmit ? _submit : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFCBD5E1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_isSubmitting)
+                      SizedBox(
+                        width: 18.w,
+                        height: 18.w,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: Colors.white,
+                        ),
+                      )
+                    else
+                      const Icon(Icons.send_rounded, size: 19),
+                    SizedBox(width: 9.w),
+                    Text(
+                      _isSubmitting
+                          ? 'common.loading'.tr()
+                          : 'invoice.submit_request'.tr(),
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        if (_attachment != null) ...[
-          SizedBox(height: 12.h),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14.r),
-            child: Image.file(
-              File(_attachment!.path),
-              height: 190.h,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TextButton.icon(
-              onPressed: () => setState(() => _attachment = null),
-              icon: const Icon(Icons.delete_outline_rounded),
-              label: Text('common.delete'.tr()),
-            ),
-          ),
-        ],
-        SizedBox(height: 20.h),
-        SizedBox(
-          height: 52.h,
-          child: FilledButton.icon(
-            onPressed: canSubmit ? _submit : null,
-            icon: _isSubmitting
-                ? SizedBox(
-                    width: 18.w,
-                    height: 18.w,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.send_rounded),
-            label: Text(
-              _isSubmitting
-                  ? 'common.loading'.tr()
-                  : 'invoice.submit_request'.tr(),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
+}
+
+class _ProgressStep extends StatelessWidget {
+  final int number;
+  final String label;
+  final bool complete;
+
+  const _ProgressStep({
+    required this.number,
+    required this.label,
+    required this.complete,
+  });
+
+  @override
+  Widget build(BuildContext context) => Chip(
+    backgroundColor: complete ? const Color(0xFFCCFBF1) : Colors.white,
+    side: BorderSide(
+      color: complete ? const Color(0xFF99F6E4) : const Color(0xFFE2E8F0),
+    ),
+    avatar: complete
+        ? const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF0F766E),
+            size: 18,
+          )
+        : CircleAvatar(
+            backgroundColor: const Color(0xFFF1F5F9),
+            child: Text('$number', style: const TextStyle(fontSize: 11)),
+          ),
+    label: Text(
+      label,
+      style: TextStyle(fontSize: 11.sp, color: const Color(0xFF334155)),
+    ),
+  );
+}
+
+class _FormSection extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  const _FormSection({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: EdgeInsets.all(16.w),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18.r),
+      border: Border.all(color: const Color(0xFFE7EDF3)),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+          blurRadius: 16.r,
+          offset: Offset(0, 5.h),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 34.w,
+              height: 34.w,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5F3),
+                borderRadius: BorderRadius.circular(11.r),
+              ),
+              child: Icon(icon, size: 18.sp, color: const Color(0xFF0F766E)),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16.h),
+        child,
+      ],
+    ),
+  );
+}
+
+class _AttachmentAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  const _AttachmentAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => OutlinedButton(
+    onPressed: onTap,
+    style: OutlinedButton.styleFrom(
+      foregroundColor: const Color(0xFF0F766E),
+      backgroundColor: const Color(0xFFF8FAFC),
+      side: const BorderSide(color: Color(0xFFDCE7E8)),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13.r)),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, size: 21.sp),
+        SizedBox(height: 5.h),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+        ),
+      ],
+    ),
+  );
 }
 
 class _RequiredLabel extends StatelessWidget {
@@ -375,13 +734,17 @@ class _RequiredLabel extends StatelessWidget {
       children: [
         TextSpan(
           text: '$label ',
-          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF475569),
+          ),
         ),
         TextSpan(
           text: '*',
           style: TextStyle(
             fontSize: 14.sp,
-            color: Colors.red,
+            color: const Color(0xFFDC2626),
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -392,40 +755,113 @@ class _RequiredLabel extends StatelessWidget {
 
 class _SelectionButton extends StatelessWidget {
   final String label;
+  final String supportingText;
   final VoidCallback? onTap;
   final Widget? leading;
+  final IconData placeholderIcon;
+  final bool isLoading;
+  final bool isSelected;
 
   const _SelectionButton({
     required this.label,
+    required this.supportingText,
     required this.onTap,
+    required this.placeholderIcon,
     this.leading,
+    this.isLoading = false,
+    this.isSelected = false,
   });
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
+  Widget build(BuildContext context) => Material(
+    color: isSelected ? const Color(0xFFF5FBFA) : const Color(0xFFF8FAFC),
     borderRadius: BorderRadius.circular(14.r),
-    child: InputDecorator(
-      decoration: InputDecoration(
-        enabled: onTap != null,
-        suffixIcon: const Icon(Icons.arrow_drop_down_rounded),
-        filled: true,
-        fillColor: const Color(0xFFF6F8FB),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
-      ),
-      child: Row(
-        children: [
-          if (leading != null) ...[leading!, SizedBox(width: 10.w)],
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 13.sp),
-            ),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14.r),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 11.h),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF8CCBC2)
+                : const Color(0xFFE2E8F0),
           ),
-        ],
+        ),
+        child: Row(
+          children: [
+            leading ?? _PickerIcon(icon: placeholderIcon, muted: !isSelected),
+            SizedBox(width: 11.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.sp,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? const Color(0xFF0F172A)
+                          : const Color(0xFF64748B),
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  Text(
+                    supportingText,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 8.w),
+            if (isLoading)
+              SizedBox(
+                width: 18.w,
+                height: 18.w,
+                child: const CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              Icon(
+                isSelected
+                    ? Icons.edit_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                size: 21.sp,
+                color: const Color(0xFF64748B),
+              ),
+          ],
+        ),
       ),
+    ),
+  );
+}
+
+class _PickerIcon extends StatelessWidget {
+  final IconData icon;
+  final bool muted;
+
+  const _PickerIcon({required this.icon, this.muted = false});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 42.w,
+    height: 42.w,
+    decoration: BoxDecoration(
+      color: muted ? const Color(0xFFEFF3F7) : const Color(0xFFE8F5F3),
+      borderRadius: BorderRadius.circular(12.r),
+    ),
+    child: Icon(
+      icon,
+      size: 20.sp,
+      color: muted ? const Color(0xFF64748B) : const Color(0xFF0F766E),
     ),
   );
 }
@@ -470,6 +906,7 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
   final String Function(T item) titleOf;
   final String Function(T item) subtitleOf;
   final Widget Function(T item)? leadingBuilder;
+  final bool Function(T item)? isSelected;
 
   const _InvoicePagedPicker({
     required this.title,
@@ -479,6 +916,7 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
     required this.titleOf,
     required this.subtitleOf,
     this.leadingBuilder,
+    this.isSelected,
   });
 
   @override
@@ -567,41 +1005,80 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    height: MediaQuery.of(context).size.height * 0.78,
+    height: MediaQuery.of(context).size.height * 0.84,
     child: Column(
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(20.w, 18.h, 20.w, 14.h),
+          padding: EdgeInsets.fromLTRB(20.w, 12.h, 20.w, 14.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 36.w,
+                  width: 38.w,
                   height: 4.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD8DFE8),
+                    color: const Color(0xFFCBD5E1),
                     borderRadius: BorderRadius.circular(2.r),
                   ),
                 ),
               ),
-              SizedBox(height: 16.h),
-              Text(
-                widget.title,
-                style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w800),
+              SizedBox(height: 20.h),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontSize: 19.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F5F9),
+                    ),
+                  ),
+                ],
               ),
               if (widget.allowSearch) ...[
-                SizedBox(height: 12.h),
+                SizedBox(height: 8.h),
                 TextField(
                   controller: _searchController,
                   onChanged: _onQueryChanged,
                   decoration: InputDecoration(
                     hintText: widget.searchHint,
                     prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              _onQueryChanged('');
+                            },
+                            icon: const Icon(Icons.close_rounded),
+                          ),
                     filled: true,
-                    fillColor: const Color(0xFFF6F8FB),
+                    fillColor: const Color(0xFFF8FAFC),
+                    contentPadding: EdgeInsets.symmetric(vertical: 12.h),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(15.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15.r),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15.r),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0F766E),
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -609,17 +1086,39 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
             ],
           ),
         ),
-        const Divider(height: 1),
+        const Divider(height: 1, color: Color(0xFFE8EDF2)),
         Expanded(
           child: _items.isEmpty && (_loading || !_hasLoaded)
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF0F766E)),
+                )
               : _items.isEmpty && _error == null
-              ? Center(child: Text('common.no_data'.tr()))
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.search_off_rounded,
+                        size: 42.sp,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'common.no_data'.tr(),
+                        style: TextStyle(
+                          fontSize: 13.sp,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               : ListView.separated(
                   controller: _scrollController,
+                  padding: EdgeInsets.fromLTRB(16.w, 12.h, 16.w, 20.h),
                   itemCount:
                       _items.length + (_hasMore || _error != null ? 1 : 0),
-                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  separatorBuilder: (_, _) => SizedBox(height: 8.h),
                   itemBuilder: (context, index) {
                     if (index >= _items.length) {
                       if (_error != null) {
@@ -635,7 +1134,9 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
                         return Padding(
                           padding: EdgeInsets.all(16.h),
                           child: const Center(
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF0F766E),
+                            ),
                           ),
                         );
                       }
@@ -649,16 +1150,79 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
 
                     final item = _items[index];
                     final subtitle = widget.subtitleOf(item);
-                    return ListTile(
-                      leading: widget.leadingBuilder?.call(item),
-                      title: Text(
-                        widget.titleOf(item),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                    final isSelected = widget.isSelected?.call(item) ?? false;
+                    return Material(
+                      color: isSelected
+                          ? const Color(0xFFF0F9F7)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(15.r),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(15.r),
+                        onTap: () => Navigator.of(context).pop(item),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 11.h,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15.r),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF91CFC5)
+                                  : const Color(0xFFE8EDF2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              widget.leadingBuilder?.call(item) ??
+                                  const _PickerIcon(
+                                    icon: Icons.business_outlined,
+                                  ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.titleOf(item),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    if (subtitle.isNotEmpty) ...[
+                                      SizedBox(height: 3.h),
+                                      Text(
+                                        subtitle,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 10.sp,
+                                          height: 1.35,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 8.w),
+                              Icon(
+                                isSelected
+                                    ? Icons.check_circle_rounded
+                                    : Icons.chevron_right_rounded,
+                                color: isSelected
+                                    ? const Color(0xFF0F766E)
+                                    : const Color(0xFF94A3B8),
+                                size: 21.sp,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      subtitle: subtitle.isEmpty ? null : Text(subtitle),
-                      trailing: const Icon(Icons.chevron_right_rounded),
-                      onTap: () => Navigator.of(context).pop(item),
                     );
                   },
                 ),

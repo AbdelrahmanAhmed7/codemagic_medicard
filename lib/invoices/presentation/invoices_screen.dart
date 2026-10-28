@@ -50,7 +50,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF3F6FA),
     appBar: AppBar(
-      title: Text('invoice.title'.tr()),
+      title: Text('invoice.new_request'.tr()),
+      backgroundColor: Colors.white,
+      foregroundColor: const Color(0xFF17324D),
+      surfaceTintColor: Colors.transparent,
     ),
     body: FutureBuilder<String>(
       future: _cardNoFuture,
@@ -105,7 +108,12 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF3F6FA),
-    appBar: AppBar(title: Text('invoice.my_invoices'.tr())),
+    appBar: AppBar(
+      title: Text('invoice.my_invoices'.tr()),
+      backgroundColor: Colors.white,
+      foregroundColor: const Color(0xFF17324D),
+      surfaceTintColor: Colors.transparent,
+    ),
     body: FutureBuilder<String>(
       future: _cardNoFuture,
       builder: (context, snapshot) {
@@ -175,6 +183,8 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
   bool _isLoading = false;
   bool _isInitialLoad = true;
   String? _error;
+  String _status = 'All';
+  String? _loadedLanguage;
 
   String get _lang => context.locale.languageCode;
 
@@ -182,7 +192,14 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    _loadNextPage();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loadedLanguage == _lang) return;
+    _loadedLanguage = _lang;
+    reload();
   }
 
   @override
@@ -223,6 +240,7 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
       final result = await widget.repository.getInvoices(
         lang: _lang,
         cardNo: widget.cardNo,
+        status: _status,
         page: _page,
       );
       if (!mounted || requestVersion != _requestVersion) return;
@@ -247,11 +265,113 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
 
   @override
   Widget build(BuildContext context) {
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(20.w),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF17324D), Color(0xFF0F766E)],
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                    ),
+                    borderRadius: BorderRadius.circular(22.r),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.receipt_long_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        'invoice.history_description'.tr(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      SizedBox(height: 6.h),
+                      Text(
+                        'invoice.history_hint'.tr(),
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                child: Row(
+                  children:
+                      [
+                            'All',
+                            'Pending',
+                            'Approved',
+                            'Completed',
+                            'Rejected',
+                            'Cancelled',
+                          ]
+                          .map(
+                            (status) => Padding(
+                              padding: EdgeInsetsDirectional.only(end: 8.w),
+                              child: ChoiceChip(
+                                label: Text(
+                                  status == 'All'
+                                      ? 'invoice.all_statuses'.tr()
+                                      : 'invoice.status_${status.toLowerCase()}'
+                                            .tr(),
+                                ),
+                                selected: _status == status,
+                                selectedColor: const Color(0xFFCCFBF1),
+                                backgroundColor: Colors.white,
+                                side: BorderSide(
+                                  color: _status == status
+                                      ? const Color(0xFF0F766E)
+                                      : const Color(0xFFE2E8F0),
+                                ),
+                                onSelected: (selected) {
+                                  if (!selected || _status == status) return;
+                                  _status = status;
+                                  if (_scrollController.hasClients) {
+                                    _scrollController.jumpTo(0);
+                                  }
+                                  reload();
+                                },
+                              ),
+                            ),
+                          )
+                          .toList(),
+                ),
+              ),
+              Expanded(child: _buildList(context)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
     if (_isInitialLoad && _isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_invoices.isEmpty && _error != null) {
-      return _ErrorState(message: _error!, onRetry: reload);
+      return _ErrorState(message: 'invoice.load_failed'.tr(), onRetry: reload);
     }
     if (_invoices.isEmpty) {
       return RefreshIndicator(
@@ -259,7 +379,7 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
-            SizedBox(height: 140.h),
+            SizedBox(height: 48.h),
             Icon(
               Icons.receipt_long_outlined,
               size: 60.sp,
@@ -268,10 +388,25 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
             SizedBox(height: 14.h),
             Center(
               child: Text(
-                'invoice.empty'.tr(),
+                (_status == 'All' ? 'invoice.empty' : 'invoice.empty_filter')
+                    .tr(),
+                textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14.sp, color: Colors.black54),
               ),
             ),
+            if (_status == 'All') ...[
+              SizedBox(height: 16.h),
+              Center(
+                child: FilledButton.icon(
+                  onPressed: () => context.push('/medicard-invoices'),
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text('invoice.new_request'.tr()),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F766E),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       );
@@ -353,9 +488,15 @@ class _InvoiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     margin: EdgeInsets.only(bottom: 12.h),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
+    color: Colors.white,
+    surfaceTintColor: Colors.transparent,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20.r),
+      side: const BorderSide(color: Color(0xFFE2E8F0)),
+    ),
     child: Padding(
-      padding: EdgeInsets.all(14.w),
+      padding: EdgeInsets.all(18.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -388,23 +529,33 @@ class _InvoiceCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
-                decoration: BoxDecoration(
-                  color: _statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20.r),
-                ),
-                child: Text(
-                  _statusLabel,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: _statusColor,
-                    fontWeight: FontWeight.w700,
+              SizedBox(width: 8.w),
+              Flexible(
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: Text(
+                    _statusLabel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: _statusColor,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
+          SizedBox(height: 12.h),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
           SizedBox(height: 12.h),
           Text(
             'invoice.request_number'.tr(args: [invoice.id.toString()]),
@@ -420,10 +571,12 @@ class _InvoiceCard extends StatelessWidget {
             ),
           ],
           SizedBox(height: 8.h),
-          Row(
+          Wrap(
+            spacing: 12.w,
+            runSpacing: 8.h,
             children: [
-              Expanded(
-                child: Text(
+              if (invoice.createdAt != null)
+                Text(
                   invoice.createdAt == null
                       ? ''
                       : DateFormat.yMMMd(
@@ -431,16 +584,14 @@ class _InvoiceCard extends StatelessWidget {
                         ).format(invoice.createdAt!.toLocal()),
                   style: TextStyle(fontSize: 11.sp, color: Colors.black54),
                 ),
-              ),
               if (invoice.lineCount > 0)
                 Text(
                   'invoice.line_count'.tr(args: [invoice.lineCount.toString()]),
                   style: TextStyle(fontSize: 11.sp, color: Colors.black54),
                 ),
               if (invoice.totalAmount > 0) ...[
-                SizedBox(width: 10.w),
                 Text(
-                  invoice.totalAmount.toStringAsFixed(2),
+                  '${NumberFormat.decimalPattern(context.locale.languageCode).format(invoice.totalAmount)} ${'common.egp'.tr()}',
                   style: TextStyle(
                     fontSize: 12.sp,
                     fontWeight: FontWeight.w800,

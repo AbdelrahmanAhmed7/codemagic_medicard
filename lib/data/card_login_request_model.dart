@@ -4,15 +4,19 @@ part 'card_login_request_model.g.dart';
 
 @JsonSerializable()
 class CardLoginRequestModel {
-  @JsonKey(name: "CardNo")
+  @JsonKey(name: 'cardNo')
   final String cardNo;
 
-  @JsonKey(name: "Password")
+  @JsonKey(name: 'password')
   final String password;
+
+  @JsonKey(name: 'firebaseToken')
+  final String firebaseToken;
 
   const CardLoginRequestModel({
     required this.cardNo,
     required this.password,
+    required this.firebaseToken,
   });
 
   factory CardLoginRequestModel.fromJson(Map<String, dynamic> json) =>
