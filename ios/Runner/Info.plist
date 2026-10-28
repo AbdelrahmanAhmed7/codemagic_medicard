@@ -30,6 +30,8 @@
 	<string>MediCard uses your location to show network providers nearest to you.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>MediCard uses your location to show network providers nearest to you.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>MediCard uses the camera to photograph your prescription for a service request.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>maps</string>

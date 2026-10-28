@@ -63,12 +63,20 @@ class ProviderDetailsScreen extends StatelessWidget {
                     ),
 
                   // ── Services card ───────────────────────────────────────
-                  if (provider.services != null &&
-                      provider.services!.isNotEmpty)
-                    _ServicesCard(
-                      services: provider.services!,
-                      catColor: _catColor,
-                    ),
+                  _ServicesCard(
+                    services: provider.services ?? const [],
+                    catColor: _catColor,
+                    onRequestInvoice: () async {
+                      await context.push(
+                        '/medicard-invoices',
+                        extra: {
+                          'initialTab': 1,
+                          'providerId': provider.providerId,
+                          'providerName': provider.providerName,
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -382,6 +390,7 @@ class _ContactCard extends StatelessWidget {
     );
   }
 }
+
 class _ContactRow extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -551,8 +560,13 @@ class _AddressLine extends StatelessWidget {
 class _ServicesCard extends StatelessWidget {
   final List<NetworkService> services;
   final Color catColor;
+  final VoidCallback onRequestInvoice;
 
-  const _ServicesCard({required this.services, required this.catColor});
+  const _ServicesCard({
+    required this.services,
+    required this.catColor,
+    required this.onRequestInvoice,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -585,6 +599,26 @@ class _ServicesCard extends StatelessWidget {
               ],
             );
           }),
+          SizedBox(height: 12.h),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onRequestInvoice,
+              icon: Icon(Icons.receipt_long_rounded, size: 17.sp),
+              label: Text(
+                'network.request_invoice'.tr(),
+                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: NC.primary,
+                side: BorderSide(color: NC.primary.withValues(alpha: 0.28)),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

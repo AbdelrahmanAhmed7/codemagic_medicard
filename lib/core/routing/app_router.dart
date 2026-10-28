@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../invoices/presentation/invoices_screen.dart';
 import '../../medicard_network/logic/medicard_network_cubit.dart';
 import '../../medicard_network/presentation/medicard_network_screen.dart';
 import '../../presentation/logic/medicard_activation_cubit.dart';
@@ -118,6 +119,18 @@ class AppRouter {
                 initialSearchQuery: searchQuery,
                 initialType: type,
               ),
+            );
+          },
+        ),
+        GoRoute(
+          path: '/medicard-invoices',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return InvoicesScreen(
+              cardNo: state.uri.queryParameters['cardNo'],
+              initialTab: extra?['initialTab'] as int? ?? 0,
+              initialProviderId: extra?['providerId'] as int?,
+              initialProviderName: extra?['providerName'] as String?,
             );
           },
         ),

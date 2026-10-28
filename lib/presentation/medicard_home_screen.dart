@@ -792,6 +792,14 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
     final actions = [
       {
+        'icon': Icons.receipt_long_rounded,
+        'title': 'invoice.title'.tr(),
+        'subtitle': 'invoice.open_description'.tr(),
+        'color': const Color(0xFF059669),
+        'bgColor': const Color(0xFFE9F8F1),
+        'onTap': () => context.push('/medicard-invoices'),
+      },
+      {
         'icon': Icons.local_hospital_rounded,
         'title': 'onboarding.find_hospitals'.tr(),
         'subtitle': 'network.search_description'.tr(),
