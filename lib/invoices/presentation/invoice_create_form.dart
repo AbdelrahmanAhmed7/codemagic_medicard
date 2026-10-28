@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -16,13 +17,11 @@ class InvoiceCreateForm extends StatefulWidget {
   final InvoiceRepository repository;
   final int? initialProviderId;
   final String? initialProviderName;
-  final VoidCallback onCreated;
 
   const InvoiceCreateForm({
     super.key,
     required this.cardNo,
     required this.repository,
-    required this.onCreated,
     this.initialProviderId,
     this.initialProviderName,
   });
@@ -91,6 +90,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
       ),
       titleOf: (item) => item.providerName.trim(),
       subtitleOf: (item) => item.categoryName,
+      leadingBuilder: (item) => _ProviderLogo(url: item.providerLogo),
     );
     if (provider == null || !mounted) return;
     setState(() {
@@ -130,6 +130,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     required Future<InvoicePage<T>> Function(String query, int page) loadPage,
     required String Function(T item) titleOf,
     required String Function(T item) subtitleOf,
+    Widget Function(T item)? leadingBuilder,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -146,6 +147,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         loadPage: loadPage,
         titleOf: titleOf,
         subtitleOf: subtitleOf,
+        leadingBuilder: leadingBuilder,
       ),
     );
   }
@@ -170,8 +172,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final attachment = _attachment;
     if (provider == null ||
         branch == null ||
-        notes.isEmpty ||
-        attachment == null) {
+        (notes.isEmpty && attachment == null)) {
       return;
     }
 
@@ -197,7 +198,6 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         'invoice.created_successfully'.tr(),
         type: SnackBarType.success,
       );
-      widget.onCreated();
     } catch (error) {
       if (mounted) _showError(error);
     } finally {
@@ -219,8 +219,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final canSubmit =
         _provider != null &&
         _branch != null &&
-        _notesController.text.trim().isNotEmpty &&
-        _attachment != null &&
+        (_notesController.text.trim().isNotEmpty || _attachment != null) &&
         !_isSubmitting;
 
     return ListView(
@@ -248,6 +247,9 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
               (_isLoadingInitialProvider
                   ? 'common.loading'.tr()
                   : 'invoice.choose_provider'.tr()),
+          leading: _provider == null
+              ? null
+              : _ProviderLogo(url: _provider!.providerLogo),
           onTap: _isLoadingInitialProvider ? null : _chooseProvider,
         ),
         SizedBox(height: 16.h),
@@ -264,7 +266,15 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
           onTap: _provider == null ? null : _chooseBranch,
         ),
         SizedBox(height: 16.h),
-        _RequiredLabel('invoice.notes'.tr()),
+        Text(
+          'invoice.notes_or_image_required'.tr(),
+          style: TextStyle(fontSize: 12.sp, color: const Color(0xFF64748B)),
+        ),
+        SizedBox(height: 8.h),
+        Text(
+          'invoice.notes'.tr(),
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+        ),
         SizedBox(height: 7.h),
         TextField(
           controller: _notesController,
@@ -283,7 +293,10 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
           ),
         ),
         SizedBox(height: 8.h),
-        _RequiredLabel('invoice.prescription'.tr()),
+        Text(
+          'invoice.prescription'.tr(),
+          style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w700),
+        ),
         SizedBox(height: 7.h),
         Row(
           children: [
@@ -380,8 +393,13 @@ class _RequiredLabel extends StatelessWidget {
 class _SelectionButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
+  final Widget? leading;
 
-  const _SelectionButton({required this.label, required this.onTap});
+  const _SelectionButton({
+    required this.label,
+    required this.onTap,
+    this.leading,
+  });
 
   @override
   Widget build(BuildContext context) => InkWell(
@@ -395,12 +413,51 @@ class _SelectionButton extends StatelessWidget {
         fillColor: const Color(0xFFF6F8FB),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14.r)),
       ),
-      child: Text(
-        label,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontSize: 13.sp),
+      child: Row(
+        children: [
+          if (leading != null) ...[leading!, SizedBox(width: 10.w)],
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 13.sp),
+            ),
+          ),
+        ],
       ),
+    ),
+  );
+}
+
+class _ProviderLogo extends StatelessWidget {
+  final String url;
+
+  const _ProviderLogo({required this.url});
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(10.r),
+    child: SizedBox(
+      width: 42.w,
+      height: 42.w,
+      child: url.trim().isEmpty
+          ? const ColoredBox(
+              color: Color(0xFFE9EEF5),
+              child: Icon(Icons.local_hospital_outlined),
+            )
+          : CachedNetworkImage(
+              imageUrl: url,
+              fit: BoxFit.cover,
+              placeholder: (_, _) => const ColoredBox(
+                color: Color(0xFFE9EEF5),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              errorWidget: (_, _, _) => const ColoredBox(
+                color: Color(0xFFE9EEF5),
+                child: Icon(Icons.local_hospital_outlined),
+              ),
+            ),
     ),
   );
 }
@@ -412,6 +469,7 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
   final Future<InvoicePage<T>> Function(String query, int page) loadPage;
   final String Function(T item) titleOf;
   final String Function(T item) subtitleOf;
+  final Widget Function(T item)? leadingBuilder;
 
   const _InvoicePagedPicker({
     required this.title,
@@ -420,6 +478,7 @@ class _InvoicePagedPicker<T> extends StatefulWidget {
     required this.loadPage,
     required this.titleOf,
     required this.subtitleOf,
+    this.leadingBuilder,
   });
 
   @override
@@ -591,6 +650,7 @@ class _InvoicePagedPickerState<T> extends State<_InvoicePagedPicker<T>> {
                     final item = _items[index];
                     final subtitle = widget.subtitleOf(item);
                     return ListTile(
+                      leading: widget.leadingBuilder?.call(item),
                       title: Text(
                         widget.titleOf(item),
                         maxLines: 2,

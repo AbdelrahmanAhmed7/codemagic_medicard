@@ -343,59 +343,97 @@ class _ServicesPreview extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(top: 10.h),
-      child: Wrap(
-        spacing: 6.w,
-        runSpacing: 6.h,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ...visible.map(
-            (s) => Container(
-              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-              decoration: BoxDecoration(
-                color: NC.success.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(6.r),
-                border: Border.all(color: NC.success.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                '${s.serviceName}: ${s.discount}%',
-                style: TextStyle(
-                  fontSize: 9.sp,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF059669),
-                ),
-              ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 8.w,
+              mainAxisSpacing: 8.h,
+              childAspectRatio: 1.5,
             ),
-          ),
-          if (extra > 0)
-            GestureDetector(
-              onTap: onShowAll,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            itemCount: visible.length,
+            itemBuilder: (context, index) {
+              final service = visible[index];
+              return Container(
+                padding: EdgeInsets.all(10.w),
                 decoration: BoxDecoration(
-                  color: NC.primary.withValues(alpha: 0.07),
-                  borderRadius: BorderRadius.circular(6.r),
-                  border: Border.all(color: NC.primary.withValues(alpha: 0.15)),
+                  color: NC.success.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10.r),
+                  border: Border.all(color: NC.success.withValues(alpha: 0.2)),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      '+$extra ${'network.more'.tr()}',
+                      service.serviceName,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 9.sp,
-                        fontWeight: FontWeight.w800,
-                        color: NC.primaryMid,
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
                       ),
                     ),
-                    SizedBox(width: 2.w),
-                    Icon(
-                      Icons.expand_more_rounded,
-                      size: 13.sp,
-                      color: NC.primaryMid,
+                    SizedBox(height: 5.h),
+                    Text(
+                      '${service.discount}%',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF059669),
+                      ),
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+          if (extra > 0) ...[
+            SizedBox(height: 6.h),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: GestureDetector(
+                onTap: onShowAll,
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: NC.primary.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(6.r),
+                    border: Border.all(
+                      color: NC.primary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '+$extra ${'network.more'.tr()}',
+                        style: TextStyle(
+                          fontSize: 9.sp,
+                          fontWeight: FontWeight.w800,
+                          color: NC.primaryMid,
+                        ),
+                      ),
+                      SizedBox(width: 2.w),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        size: 13.sp,
+                        color: NC.primaryMid,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
+          ],
         ],
       ),
     );

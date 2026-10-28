@@ -442,6 +442,7 @@
     "search_branches": "Search branches",
     "notes": "Request details",
     "notes_hint": "Describe the service you need",
+    "notes_or_image_required": "Enter request details or attach an image; either one is required",
     "prescription": "Prescription or supporting image",
     "take_photo": "Take photo",
     "choose_photo": "Choose photo",

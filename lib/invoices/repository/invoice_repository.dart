@@ -30,7 +30,7 @@ class InvoiceRepository {
     required int providerId,
     required int providerLocationId,
     required String notes,
-    required XFile attachment,
+    XFile? attachment,
   }) => _apiService.createInvoice(
     lang: lang,
     cardNo: cardNo,

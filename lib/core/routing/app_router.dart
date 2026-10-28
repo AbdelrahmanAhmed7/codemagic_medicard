@@ -128,11 +128,15 @@ class AppRouter {
             final extra = state.extra as Map<String, dynamic>?;
             return InvoicesScreen(
               cardNo: state.uri.queryParameters['cardNo'],
-              initialTab: extra?['initialTab'] as int? ?? 0,
               initialProviderId: extra?['providerId'] as int?,
               initialProviderName: extra?['providerName'] as String?,
             );
           },
+        ),
+        GoRoute(
+          path: '/medicard-invoices/history',
+          builder: (context, state) =>
+              InvoiceHistoryScreen(cardNo: state.uri.queryParameters['cardNo']),
         ),
         GoRoute(
           path: '/medicard-support',

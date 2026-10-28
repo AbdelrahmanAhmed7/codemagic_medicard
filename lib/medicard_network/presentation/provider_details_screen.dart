@@ -70,7 +70,6 @@ class ProviderDetailsScreen extends StatelessWidget {
                       await context.push(
                         '/medicard-invoices',
                         extra: {
-                          'initialTab': 1,
                           'providerId': provider.providerId,
                           'providerName': provider.providerName,
                         },

@@ -13,14 +13,12 @@ import 'invoice_create_form.dart';
 
 class InvoicesScreen extends StatefulWidget {
   final String? cardNo;
-  final int initialTab;
   final int? initialProviderId;
   final String? initialProviderName;
 
   const InvoicesScreen({
     super.key,
     this.cardNo,
-    this.initialTab = 0,
     this.initialProviderId,
     this.initialProviderName,
   });
@@ -29,21 +27,13 @@ class InvoicesScreen extends StatefulWidget {
   State<InvoicesScreen> createState() => _InvoicesScreenState();
 }
 
-class _InvoicesScreenState extends State<InvoicesScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+class _InvoicesScreenState extends State<InvoicesScreen> {
   late final Future<String> _cardNoFuture;
-  final _invoiceListKey = GlobalKey<_InvoiceListTabState>();
   late final InvoiceRepository _repository;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 1),
-    );
     _repository = sl<InvoiceRepository>();
     _cardNoFuture = _resolveCardNo();
   }
@@ -57,29 +47,18 @@ class _InvoicesScreenState extends State<InvoicesScreen>
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF3F6FA),
     appBar: AppBar(
       title: Text('invoice.title'.tr()),
-      bottom: TabBar(
-        controller: _tabController,
-        tabs: [
-          Tab(
-            icon: const Icon(Icons.receipt_long_outlined),
-            text: 'invoice.my_invoices'.tr(),
-          ),
-          Tab(
-            icon: const Icon(Icons.add_circle_outline_rounded),
-            text: 'invoice.new_request'.tr(),
-          ),
-        ],
-      ),
+      actions: [
+        TextButton.icon(
+          onPressed: () => context.push('/medicard-invoices/history'),
+          icon: const Icon(Icons.receipt_long_outlined),
+          label: Text('invoice.my_invoices'.tr()),
+        ),
+        SizedBox(width: 8.w),
+      ],
     ),
     body: FutureBuilder<String>(
       future: _cardNoFuture,
@@ -91,27 +70,61 @@ class _InvoicesScreenState extends State<InvoicesScreen>
         if (cardNo.isEmpty) {
           return _LoginRequired(onLogin: () => context.push('/medicard'));
         }
-        return TabBarView(
-          controller: _tabController,
-          children: [
-            _InvoiceListTab(
-              key: _invoiceListKey,
-              cardNo: cardNo,
-              repository: _repository,
-            ),
-            InvoiceCreateForm(
-              key: ValueKey(widget.initialProviderId),
-              cardNo: cardNo,
-              repository: _repository,
-              initialProviderId: widget.initialProviderId,
-              initialProviderName: widget.initialProviderName,
-              onCreated: () {
-                _invoiceListKey.currentState?.reload();
-                _tabController.animateTo(0);
-              },
-            ),
-          ],
+        return InvoiceCreateForm(
+          key: ValueKey(widget.initialProviderId),
+          cardNo: cardNo,
+          repository: _repository,
+          initialProviderId: widget.initialProviderId,
+          initialProviderName: widget.initialProviderName,
         );
+      },
+    ),
+  );
+}
+
+class InvoiceHistoryScreen extends StatefulWidget {
+  final String? cardNo;
+
+  const InvoiceHistoryScreen({super.key, this.cardNo});
+
+  @override
+  State<InvoiceHistoryScreen> createState() => _InvoiceHistoryScreenState();
+}
+
+class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
+  late final Future<String> _cardNoFuture;
+  late final InvoiceRepository _repository;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = sl<InvoiceRepository>();
+    _cardNoFuture = _resolveCardNo();
+  }
+
+  Future<String> _resolveCardNo() async {
+    final suppliedCardNo = widget.cardNo?.trim() ?? '';
+    if (suppliedCardNo.isNotEmpty) return suppliedCardNo;
+    return (await SharedPrefHelper.getString(
+      SharedPrefKeys.medicardCardNo,
+    )).trim();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFFF3F6FA),
+    appBar: AppBar(title: Text('invoice.my_invoices'.tr())),
+    body: FutureBuilder<String>(
+      future: _cardNoFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final cardNo = snapshot.data ?? '';
+        if (cardNo.isEmpty) {
+          return _LoginRequired(onLogin: () => context.push('/medicard'));
+        }
+        return _InvoiceListTab(cardNo: cardNo, repository: _repository);
       },
     ),
   );
@@ -155,11 +168,7 @@ class _InvoiceListTab extends StatefulWidget {
   final String cardNo;
   final InvoiceRepository repository;
 
-  const _InvoiceListTab({
-    super.key,
-    required this.cardNo,
-    required this.repository,
-  });
+  const _InvoiceListTab({required this.cardNo, required this.repository});
 
   @override
   State<_InvoiceListTab> createState() => _InvoiceListTabState();

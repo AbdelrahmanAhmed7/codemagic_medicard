@@ -65,7 +65,7 @@ class InvoiceApiService {
     required int providerId,
     required int providerLocationId,
     required String notes,
-    required XFile attachment,
+    XFile? attachment,
   }) async {
     final formData = FormData()
       ..fields.addAll([
@@ -73,8 +73,9 @@ class InvoiceApiService {
         MapEntry('ProviderId', providerId.toString()),
         MapEntry('ProviderLocationId', providerLocationId.toString()),
         MapEntry('Notes', notes),
-      ])
-      ..files.add(
+      ]);
+    if (attachment != null) {
+      formData.files.add(
         MapEntry(
           'Attachments',
           await MultipartFile.fromFile(
@@ -83,6 +84,7 @@ class InvoiceApiService {
           ),
         ),
       );
+    }
     final response = await _dio.post<Map<String, dynamic>>(
       '$_baseUrl/$lang/Invoices/Create',
       data: formData,
