@@ -91,6 +91,13 @@ class InvoiceBranch {
     longitude: _asDouble(json['longitude']),
     mapsUrl: json['mapsUrl'] as String? ?? '',
   );
+
+  String get displayAddress {
+    if (address.trim().isNotEmpty) return address.trim();
+    if (branchName.trim().isNotEmpty) return branchName.trim();
+    if (area.trim().isNotEmpty) return area.trim();
+    return '';
+  }
 }
 
 class InvoiceRecord {
@@ -101,6 +108,7 @@ class InvoiceRecord {
   final String statusChar;
   final String notes;
   final String attachmentsFolder;
+  final String invoicePdfUrl;
   final DateTime? createdAt;
   final int lineCount;
   final double totalAmount;
@@ -113,6 +121,7 @@ class InvoiceRecord {
     required this.statusChar,
     required this.notes,
     required this.attachmentsFolder,
+    required this.invoicePdfUrl,
     required this.createdAt,
     required this.lineCount,
     required this.totalAmount,
@@ -126,6 +135,7 @@ class InvoiceRecord {
     statusChar: json['statusChar'] as String? ?? '',
     notes: json['notes'] as String? ?? '',
     attachmentsFolder: json['attachmentsFolder'] as String? ?? '',
+    invoicePdfUrl: json['invoicePdfUrl'] as String? ?? '',
     createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
     lineCount: _asInt(json['lineCount']),
     totalAmount: _asDouble(json['totalAmount']),

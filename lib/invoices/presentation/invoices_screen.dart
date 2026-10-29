@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/helpers/shared_pref_helper.dart';
+import '../../core/services/url_launcher_service.dart';
 import '../data/invoice_models.dart';
 import '../repository/invoice_repository.dart';
 import 'invoice_create_form.dart';
@@ -186,7 +187,6 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
   bool _isLoading = false;
   bool _isInitialLoad = true;
   String? _error;
-  String _status = 'All';
   String? _loadedLanguage;
 
   String get _lang => context.locale.languageCode;
@@ -243,7 +243,7 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
       final result = await widget.repository.getInvoices(
         lang: _lang,
         cardNo: widget.cardNo,
-        status: _status,
+        status: 'All',
         page: _page,
       );
       if (!mounted || requestVersion != _requestVersion) return;
@@ -319,65 +319,6 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
                   ],
                 ),
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-                child: Row(
-                  children:
-                      [
-                            'All',
-                            'Pending',
-                            'Approved',
-                            'Completed',
-                            'Rejected',
-                            'Cancelled',
-                          ]
-                          .map(
-                            (status) => Padding(
-                              padding: EdgeInsetsDirectional.only(end: 8.w),
-                              child: ChoiceChip(
-                                label: Text(
-                                  status == 'All'
-                                      ? 'invoice.all_statuses'.tr()
-                                      : 'invoice.status_${status.toLowerCase()}'
-                                            .tr(),
-                                ),
-                                labelStyle: TextStyle(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w700,
-                                  color: _status == status
-                                      ? const Color(0xFF0F766E)
-                                      : const Color(0xFF64748B),
-                                ),
-                                selected: _status == status,
-                                selectedColor: const Color(0xFFCCFBF1),
-                                backgroundColor: Colors.white,
-                                showCheckmark: false,
-                                visualDensity: VisualDensity.compact,
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w,
-                                  vertical: 6.h,
-                                ),
-                                shape: const StadiumBorder(),
-                                side: BorderSide(
-                                  color: _status == status
-                                      ? const Color(0xFF82C7BB)
-                                      : const Color(0xFFE6EBF0),
-                                ),
-                                onSelected: (selected) {
-                                  if (!selected || _status == status) return;
-                                  _status = status;
-                                  if (_scrollController.hasClients) {
-                                    _scrollController.jumpTo(0);
-                                  }
-                                  reload();
-                                },
-                              ),
-                            ),
-                          )
-                          .toList(),
-                ),
-              ),
               Expanded(child: _buildList(context)),
             ],
           ),
@@ -408,25 +349,22 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
             SizedBox(height: 14.h),
             Center(
               child: Text(
-                (_status == 'All' ? 'invoice.empty' : 'invoice.empty_filter')
-                    .tr(),
+                'invoice.empty'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14.sp, color: Colors.black54),
               ),
             ),
-            if (_status == 'All') ...[
-              SizedBox(height: 16.h),
-              Center(
-                child: FilledButton.icon(
-                  onPressed: () => context.push('/medicard-invoices'),
-                  icon: const Icon(Icons.add_rounded),
-                  label: Text('invoice.new_request'.tr()),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F766E),
-                  ),
+            SizedBox(height: 16.h),
+            Center(
+              child: FilledButton.icon(
+                onPressed: () => context.push('/medicard-invoices'),
+                icon: const Icon(Icons.add_rounded),
+                label: Text('invoice.new_request'.tr()),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0F766E),
                 ),
               ),
-            ],
+            ),
           ],
         ),
       );
@@ -659,6 +597,39 @@ class _InvoiceCard extends StatelessWidget {
                     ),
                   ),
               ],
+            ),
+          ],
+          // ── Download PDF button ──────────────────────────────────────────
+          if (invoice.invoicePdfUrl.isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            Container(height: 1, color: const Color(0xFFF0F3F6)),
+            SizedBox(height: 10.h),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    UrlLauncherService().launchURL(invoice.invoicePdfUrl),
+                icon: Icon(
+                  Icons.download_rounded,
+                  size: 18.sp,
+                  color: const Color(0xFF0F766E),
+                ),
+                label: Text(
+                  'invoice.download_pdf'.tr(),
+                  style: TextStyle(
+                    fontSize: 13.sp,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F766E),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF0F766E)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                ),
+              ),
             ),
           ],
         ],

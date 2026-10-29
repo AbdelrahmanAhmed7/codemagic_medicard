@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../firebase_options.dart';
+import '../../core/services/url_launcher_service.dart';
 import 'local_notification_service.dart';
 import 'notification_destination.dart';
 
@@ -47,11 +48,11 @@ class FirebaseNotificationService {
     _router = router;
     router.routerDelegate.addListener(_flushPendingDestination);
     _openedSubscription = _openedMessages.listen(
-      (message) => _openDestination(notificationDestination(message.data)),
+      (message) => _handleOpen(message.data),
       onError: _reportError,
     );
     try {
-      await _display.initialize(onOpen: _openDestination);
+      await _display.initialize(onOpen: _handleOpenUrl);
       if (_disposed) return;
       _foregroundSubscription = _messages.listen(
         (message) => unawaited(_show(message)),
@@ -70,7 +71,7 @@ class FirebaseNotificationService {
     try {
       final message = await _messaging.getInitialMessage();
       if (message != null) {
-        _openDestination(notificationDestination(message.data));
+        _handleOpen(message.data);
       }
       if (!_disposed) await _messaging.requestPermission();
     } catch (error, stack) {
@@ -122,5 +123,29 @@ class FirebaseNotificationService {
 
   void _reportError(Object error, StackTrace stack) {
     debugPrint('Notification service unavailable: ${error.runtimeType}');
+  }
+
+  /// Called when a local-notification tap carries a raw URL or route string.
+  /// The payload is either a PDF URL (starts with http) or an in-app route.
+  void _handleOpenUrl(String payload) {
+    if (payload.startsWith('http://') || payload.startsWith('https://')) {
+      unawaited(UrlLauncherService().launchURL(payload));
+    } else {
+      _openDestination(payload);
+    }
+  }
+
+  /// Called when tapping an FCM message (foreground local-notification or
+  /// background/killed FCM tap). Checks for invoice_pdf_url first.
+  void _handleOpen(Map<String, dynamic> data) {
+    final pdfUrl =
+        data['invoice_pdf_url'] is String
+            ? (data['invoice_pdf_url'] as String).trim()
+            : '';
+    if (pdfUrl.isNotEmpty) {
+      unawaited(UrlLauncherService().launchURL(pdfUrl));
+    } else {
+      _openDestination(notificationDestination(data));
+    }
   }
 }

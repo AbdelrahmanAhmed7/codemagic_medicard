@@ -242,21 +242,21 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final branch = await _showPagedPicker<InvoiceBranch>(
       title: 'invoice.choose_branch'.tr(),
       allowSearch: false,
-      titleFontSize: 16,
-      subtitleFontSize: 13,
+      titleFontSize: 14,
+      subtitleFontSize: 12,
       loadPage: (_, page) => widget.repository.getProviderBranches(
         lang: _lang,
         providerId: provider.providerId,
         page: page,
       ),
-      titleOf: (item) => item.branchName.trim().isEmpty
-          ? item.area.trim()
-          : item.branchName.trim(),
-      subtitleOf: (item) => [
-        item.area,
-        item.city,
-        item.government,
-      ].where((part) => part.trim().isNotEmpty).join(' - '),
+      titleOf: (item) => item.displayAddress,
+      subtitleOf: (item) {
+        final address = item.displayAddress;
+        final name = item.branchName.trim().isNotEmpty
+            ? item.branchName.trim()
+            : item.area.trim();
+        return (name.isNotEmpty && name != address) ? name : '';
+      },
       leadingBuilder: (_) =>
           const _PickerIcon(icon: Icons.location_on_outlined),
       isSelected: (item) => item.locationId == _branch?.locationId,
@@ -571,18 +571,16 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                     key: _branchKey,
                     label: _branch == null
                         ? 'invoice.choose_branch'.tr()
-                        : _branch!.branchName.trim().isEmpty
-                        ? _branch!.area.trim()
-                        : _branch!.branchName.trim(),
+                        : _branch!.displayAddress,
                     supportingText: _branch == null
                         ? _provider == null
                               ? 'invoice.choose_provider_first'.tr()
                               : 'invoice.branch_hint'.tr()
-                        : [
-                            _branch!.address,
-                            _branch!.city,
-                            _branch!.government,
-                          ].where((part) => part.trim().isNotEmpty).join(' - '),
+                        : (_branch!.branchName.trim().isNotEmpty &&
+                                _branch!.branchName.trim() !=
+                                    _branch!.displayAddress
+                            ? _branch!.branchName.trim()
+                            : ''),
                     leading: _branch == null
                         ? null
                         : const _PickerIcon(icon: Icons.location_on_outlined),
@@ -993,7 +991,7 @@ class _SelectionButton extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.sp,
@@ -1003,16 +1001,18 @@ class _SelectionButton extends StatelessWidget {
                           : const Color(0xFF64748B),
                     ),
                   ),
-                  SizedBox(height: 3.h),
-                  Text(
-                    supportingText,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10.sp,
-                      color: const Color(0xFF64748B),
+                  if (supportingText.trim().isNotEmpty) ...[
+                    SizedBox(height: 3.h),
+                    Text(
+                      supportingText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

@@ -470,7 +470,8 @@
     "status_approved": "Approved",
     "status_completed": "Completed",
     "status_rejected": "Rejected",
-    "status_cancelled": "Cancelled"
+    "status_cancelled": "Cancelled",
+    "download_pdf": "Download Invoice PDF"
   },
   "notifications": {
     "title": "Notification",

@@ -464,7 +464,8 @@
     "status_approved": "تمت الموافقة",
     "status_completed": "مكتمل",
     "status_rejected": "مرفوض",
-    "status_cancelled": "ملغي"
+    "status_cancelled": "ملغي",
+    "download_pdf": "تحميل الفاتورة PDF"
   },
   "notifications": {
     "title": "الإشعارات",

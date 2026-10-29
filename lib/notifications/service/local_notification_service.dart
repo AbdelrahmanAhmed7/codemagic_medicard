@@ -59,6 +59,14 @@ class LocalNotificationService implements NotificationDisplay {
     final title = message.notification?.title ?? text('title');
     final body = message.notification?.body ?? text('body');
     if (title.isEmpty && body.isEmpty) return;
+
+    // If the message carries a PDF URL, store it as the payload so tapping
+    // the notification opens the browser directly.
+    final pdfUrl = text('invoice_pdf_url');
+    final payload = pdfUrl.isNotEmpty
+        ? pdfUrl
+        : notificationDestination(message.data);
+
     await _plugin.show(
       id:
           (message.messageId ?? '${DateTime.now().microsecondsSinceEpoch}')
@@ -83,7 +91,7 @@ class LocalNotificationService implements NotificationDisplay {
           presentSound: true,
         ),
       ),
-      payload: notificationDestination(message.data),
+      payload: payload,
     );
   }
 }
