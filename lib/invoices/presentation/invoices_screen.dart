@@ -15,12 +15,14 @@ class InvoicesScreen extends StatefulWidget {
   final String? cardNo;
   final int? initialProviderId;
   final String? initialProviderName;
+  final bool runTutorial;
 
   const InvoicesScreen({
     super.key,
     this.cardNo,
     this.initialProviderId,
     this.initialProviderName,
+    this.runTutorial = false,
   });
 
   @override
@@ -71,6 +73,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
           repository: _repository,
           initialProviderId: widget.initialProviderId,
           initialProviderName: widget.initialProviderName,
+          runTutorial: widget.runTutorial,
         );
       },
     ),

@@ -65,23 +65,23 @@ class InvoiceApiService {
     required int providerId,
     required int providerLocationId,
     required String notes,
-    XFile? attachment,
+    List<XFile> attachments = const [],
   }) async {
+    // Keep Notes in the multipart payload even when no text was entered.
+    // The API expects an empty string here, not a null/missing field.
+    final notesValue = notes.isEmpty ? '' : notes;
     final formData = FormData()
       ..fields.addAll([
         MapEntry('CardNo', cardNo),
         MapEntry('ProviderId', providerId.toString()),
         MapEntry('ProviderLocationId', providerLocationId.toString()),
-        MapEntry('Notes', notes),
+        MapEntry('Notes', notesValue),
       ]);
-    if (attachment != null) {
+    for (final file in attachments) {
       formData.files.add(
         MapEntry(
           'Attachments',
-          await MultipartFile.fromFile(
-            attachment.path,
-            filename: attachment.name,
-          ),
+          await MultipartFile.fromFile(file.path, filename: file.name),
         ),
       );
     }

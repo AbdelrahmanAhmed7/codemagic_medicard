@@ -10,6 +10,7 @@ import '../core/di/service_locator.dart';
 import '../core/services/session_service.dart';
 import '../core/services/url_launcher_service.dart';
 import '../core/theming/app_text_styles.dart';
+import '../core/tutorial/tutorial_service.dart';
 import 'widgets/legal_links_row.dart';
 import '../data/card_personal_info_response_model.dart';
 import 'logic/medicard_home_cubit.dart';
@@ -151,6 +152,8 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                   _buildMediCard(_currentData), // Updated to the premium design
                   SizedBox(height: 12.h),
                   _buildProfileSection(context, _currentData),
+                  SizedBox(height: 16.h),
+                  _buildSettingsSection(context),
                   SizedBox(height: 24.h),
                   const LegalLinksRow(),
                   SizedBox(height: 24.h),
@@ -431,6 +434,49 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
             icon: Icons.event_busy_outlined,
             title: 'insurance_plan.valid_until'.tr(),
             value: _formatDate(data.expireDate),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(color: const Color(0xFFE6ECF7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.settings_outlined, color: Color(0xFF1E3A8A)),
+              SizedBox(width: 10.w),
+              Text(
+                'profile.settings'.tr(),
+                style: AppTextStyles.font18BlackSemiBold(context),
+              ),
+            ],
+          ),
+          SizedBox(height: 8.h),
+          const Divider(color: Color(0xFFE6ECF7)),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.replay_rounded, color: Color(0xFF1E3A8A)),
+            title: Text(
+              'profile.replay_new_order_tutorial'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+            onTap: () async {
+              await TutorialService.reset();
+              if (context.mounted) {
+                context.pop(newOrderTutorialReplayResult);
+              }
+            },
           ),
         ],
       ),

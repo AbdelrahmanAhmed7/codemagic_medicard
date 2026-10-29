@@ -30,14 +30,14 @@ class InvoiceRepository {
     required int providerId,
     required int providerLocationId,
     required String notes,
-    XFile? attachment,
+    List<XFile> attachments = const [],
   }) => _apiService.createInvoice(
     lang: lang,
     cardNo: cardNo,
     providerId: providerId,
     providerLocationId: providerLocationId,
     notes: notes,
-    attachment: attachment,
+    attachments: attachments,
   );
 
   Future<InvoicePage<InvoiceRecord>> getInvoices({

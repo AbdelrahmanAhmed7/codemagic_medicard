@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../core/constants/api_result.dart';
 import '../core/constants/app_assets.dart';
@@ -12,6 +13,8 @@ import '../core/di/service_locator.dart';
 import '../core/helpers/shared_pref_helper.dart';
 import '../core/services/session_service.dart';
 import '../core/theming/app_toast.dart';
+import '../core/tutorial/tutorial_bubble.dart';
+import '../core/tutorial/tutorial_service.dart';
 import '../data/card_home_info_response_model.dart';
 import '../data/card_personal_info_response_model.dart';
 import '../medicard_network/presentation/provider_details_screen.dart';
@@ -39,6 +42,11 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   late Animation<double> _fadeAnim;
   late Animation<Offset> _slideAnim;
   bool _isGuest = false;
+
+  // Key attached to the "طلب جديد" action card
+  final _newOrderKey = GlobalKey();
+  TutorialCoachMark? _homeTourMark;
+  bool _isHomeTourShowing = false;
 
   @override
   void initState() {
@@ -90,6 +98,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
   @override
   void dispose() {
+    _homeTourMark?.finish();
     _animController.dispose();
     super.dispose();
   }
@@ -171,7 +180,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
             if (!_animController.isCompleted) {
               _animController.forward();
             }
-            _showSummerPopupsOnce();
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _handleHomeLoaded();
+            });
           },
           failed: (error) => showErrorToast(error),
           orElse: () {},
@@ -228,6 +239,79 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
         );
       },
     );
+  }
+
+  // ── Home coach-mark tour (step 1) ─────────────────────────────────────────
+  Future<void> _handleHomeLoaded() async {
+    final tutorialShown = await _maybeRunHomeTour();
+    if (!tutorialShown) await _showSummerPopupsOnce();
+  }
+
+  Future<bool> _maybeRunHomeTour() async {
+    if (_isHomeTourShowing || _isGuest || !mounted) return false;
+    final should = await TutorialService.shouldShow();
+    if (!should || !mounted) return false;
+
+    final targetContext = _newOrderKey.currentContext;
+    if (targetContext == null || !targetContext.mounted) return false;
+    await Scrollable.ensureVisible(
+      targetContext,
+      duration: const Duration(milliseconds: 350),
+      alignment: 0.35,
+      curve: Curves.easeInOut,
+    );
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted || _newOrderKey.currentContext == null) return false;
+
+    _isHomeTourShowing = true;
+    await TutorialService.markSeen();
+    if (!mounted) return false;
+
+    _homeTourMark = TutorialCoachMark(
+      targets: [
+        TargetFocus(
+          identify: 'newOrderBtn',
+          keyTarget: _newOrderKey,
+          shape: ShapeLightFocus.RRect,
+          radius: 20,
+          enableTargetTab: false,
+          contents: [
+            TargetContent(
+              align: ContentAlign.bottom,
+              builder: (_, _) => TutorialBubble(
+                text: 'جديد! يمكنك طلب الخدمات بكل سهولة بالضغط على طلب جديد',
+                nextLabel: 'فهمت',
+                onNext: () {
+                  _homeTourMark?.finish();
+                  if (mounted) {
+                    context.push(
+                      '/medicard-invoices',
+                      extra: {'runTutorial': true},
+                    );
+                  }
+                },
+                onSkip: () {
+                  _homeTourMark?.skip();
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
+      colorShadow: Colors.black,
+      opacityShadow: 0.72,
+      hideSkip: true,
+      onFinish: () {
+        _isHomeTourShowing = false;
+        TutorialService.markSeen();
+      },
+      onSkip: () {
+        _isHomeTourShowing = false;
+        TutorialService.markSeen();
+        return true;
+      },
+    )..show(context: context);
+    return true;
   }
 
   Future<void> _showSummerPopupsOnce() async {
@@ -754,6 +838,13 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       extra: {'personalData': personalData, 'cardNo': widget.cardNo},
     );
 
+    if (result == newOrderTutorialReplayResult && context.mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybeRunHomeTour();
+      });
+      return;
+    }
+
     if (result == true && context.mounted && widget.cardNo != null) {
       cubit.getHomeInfo(cardNo: widget.cardNo!, lang: lang);
     }
@@ -792,6 +883,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
     final actions = [
       {
+        'key': _newOrderKey,
         'icon': Icons.add_circle_outline_rounded,
         'title': 'invoice.new_request'.tr(),
         'subtitle': 'invoice.new_request_description'.tr(),
@@ -831,7 +923,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
           .map(
             (action) => Padding(
               padding: EdgeInsets.only(bottom: 16.h),
-              child: _ActionCard(action: action),
+              child: _ActionCard(key: action['key'] as Key?, action: action),
             ),
           )
           .toList(),
@@ -882,7 +974,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 class _ActionCard extends StatefulWidget {
   final Map<String, dynamic> action;
 
-  const _ActionCard({required this.action});
+  const _ActionCard({super.key, required this.action});
 
   @override
   State<_ActionCard> createState() => _ActionCardState();

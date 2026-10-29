@@ -8,8 +8,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../../core/theming/app_snack_bar.dart';
+import '../../core/tutorial/tutorial_bubble.dart';
+import '../../core/tutorial/tutorial_service.dart';
 import '../data/invoice_models.dart';
 import '../repository/invoice_repository.dart';
 
@@ -19,12 +22,16 @@ class InvoiceCreateForm extends StatefulWidget {
   final int? initialProviderId;
   final String? initialProviderName;
 
+  /// When true, runs the in-page coach-mark tour after mount.
+  final bool runTutorial;
+
   const InvoiceCreateForm({
     super.key,
     required this.cardNo,
     required this.repository,
     this.initialProviderId,
     this.initialProviderName,
+    this.runTutorial = false,
   });
 
   @override
@@ -36,9 +43,20 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   final _imagePicker = ImagePicker();
   InvoiceProvider? _provider;
   InvoiceBranch? _branch;
-  XFile? _attachment;
+  // Multi-image support
+  final List<XFile> _attachments = [];
   bool _isSubmitting = false;
   bool _isLoadingInitialProvider = false;
+
+  // ── Coach-mark keys ────────────────────────────────────────────────────────
+  final _providerKey = GlobalKey();
+  final _branchKey = GlobalKey();
+  final _detailsKey = GlobalKey();
+  final _requestFieldKey = GlobalKey();
+  final _uploadButtonsKey = GlobalKey();
+
+  TutorialCoachMark? _coachMark;
+  bool _tutorialStarted = false;
 
   String get _lang => context.locale.languageCode;
 
@@ -50,12 +68,129 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         _loadInitialProvider();
       });
     }
+    if (widget.runTutorial) {
+      Future<void>.delayed(const Duration(milliseconds: 450), _startFormTour);
+    }
   }
 
   @override
   void dispose() {
+    _coachMark?.finish();
     _notesController.dispose();
     super.dispose();
+  }
+
+  // ── Coach-mark tour (steps 2-4) ────────────────────────────────────────────
+  Future<void> _startFormTour() async {
+    if (!mounted || _tutorialStarted) return;
+
+    while (mounted && _isLoadingInitialProvider) {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    if (!mounted) return;
+
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+
+    void skip() {
+      TutorialService.markSeen();
+      _coachMark?.skip();
+    }
+
+    TargetFocus? makeTarget({
+      required GlobalKey key,
+      required String text,
+      required String nextLabel,
+      required VoidCallback onNext,
+      bool showSkip = true,
+      List<GlobalKey> dependentKeys = const [],
+    }) {
+      if (key.currentContext == null ||
+          dependentKeys.any((key) => key.currentContext == null)) {
+        return null;
+      }
+      return TargetFocus(
+        identify: key.toString(),
+        keyTarget: key,
+        shape: ShapeLightFocus.RRect,
+        radius: 14,
+        enableTargetTab: false,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (_, _) => TutorialBubble(
+              text: text,
+              nextLabel: nextLabel,
+              onNext: onNext,
+              onSkip: showSkip ? skip : null,
+              showSkip: showSkip,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final targets = <TargetFocus>[];
+
+    final t2 = makeTarget(
+      key: _providerKey,
+      text: 'اختار مقدم الخدمة الأول',
+      nextLabel: 'التالي',
+      onNext: () => _coachMark?.next(),
+    );
+    final t3 = makeTarget(
+      key: _branchKey,
+      text: 'بعدها اختار الفرع',
+      nextLabel: 'التالي',
+      onNext: () => _coachMark?.next(),
+    );
+    final t4 = makeTarget(
+      key: _detailsKey,
+      text: 'اكتب عايز إيه، أو ارفع صورة الروشتة',
+      nextLabel: 'تمام، فهمت',
+      onNext: () {
+        TutorialService.markSeen();
+        _coachMark?.finish();
+      },
+      showSkip: false,
+      dependentKeys: [_requestFieldKey, _uploadButtonsKey],
+    );
+
+    if (t2 != null) targets.add(t2);
+    if (t3 != null) targets.add(t3);
+    if (t4 != null) targets.add(t4);
+
+    if (targets.isEmpty) {
+      await TutorialService.markSeen();
+      return;
+    }
+
+    _tutorialStarted = true;
+    await TutorialService.markSeen();
+    if (!mounted) return;
+
+    _coachMark = TutorialCoachMark(
+      targets: targets,
+      colorShadow: Colors.black,
+      opacityShadow: 0.7,
+      hideSkip: true,
+      beforeFocus: (target) async {
+        final targetContext = target.keyTarget?.currentContext;
+        if (targetContext == null) return;
+        await Scrollable.ensureVisible(
+          targetContext,
+          duration: const Duration(milliseconds: 300),
+          alignment: 0.35,
+          curve: Curves.easeInOut,
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      },
+      onFinish: () => TutorialService.markSeen(),
+      onSkip: () {
+        TutorialService.markSeen();
+        return true;
+      },
+    )..show(context: context);
   }
 
   Future<void> _loadInitialProvider() async {
@@ -167,15 +302,26 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
 
   Future<void> _pickAttachment(ImageSource source) async {
     try {
-      final image = await _imagePicker.pickImage(
-        source: source,
-        imageQuality: 85,
-      );
-      if (image != null && mounted) setState(() => _attachment = image);
+      if (source == ImageSource.gallery) {
+        final images = await _imagePicker.pickMultiImage(imageQuality: 85);
+        if (images.isNotEmpty && mounted) {
+          setState(() => _attachments.addAll(images));
+        }
+      } else {
+        final image = await _imagePicker.pickImage(
+          source: source,
+          imageQuality: 85,
+        );
+        if (image != null && mounted) setState(() => _attachments.add(image));
+      }
     } on PlatformException catch (error) {
       if (!mounted) return;
       _showError(error);
     }
+  }
+
+  void _removeAttachment(int index) {
+    setState(() => _attachments.removeAt(index));
   }
 
   Future<void> _submit() async {
@@ -183,10 +329,9 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final provider = _provider;
     final branch = _branch;
     final notes = _notesController.text.trim();
-    final attachment = _attachment;
     if (provider == null ||
         branch == null ||
-        (notes.isEmpty && attachment == null)) {
+        (notes.isEmpty && _attachments.isEmpty)) {
       return;
     }
 
@@ -199,14 +344,14 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
         providerId: provider.providerId,
         providerLocationId: branch.locationId,
         notes: notes,
-        attachment: attachment,
+        attachments: List.unmodifiable(_attachments),
       );
       if (!mounted) return;
       _notesController.clear();
       setState(() {
         _provider = null;
         _branch = null;
-        _attachment = null;
+        _attachments.clear();
       });
       await _showSuccessAndOpenInvoices(created);
     } catch (error) {
@@ -269,9 +414,28 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   }
 
   void _showError(Object error) {
+    String message;
+    if (error is PlatformException) {
+      switch (error.code) {
+        case 'photo_access_denied':
+        case 'access_denied':
+          message = 'تم رفض الوصول للصور. يرجى السماح من الإعدادات.';
+        case 'camera_access_denied':
+          message = 'تم رفض الوصول للكاميرا. يرجى السماح من الإعدادات.';
+        default:
+          message = error.message?.isNotEmpty == true
+              ? error.message!
+              : 'تعذر فتح اختيار الصور. حاول مرة أخرى.';
+      }
+    } else {
+      message = error
+          .toString()
+          .replaceFirst(RegExp(r'^Exception:\s*'), '')
+          .replaceFirst(RegExp(r'^Bad state:\s*'), '');
+    }
     showAppSnackBar(
       context,
-      error.toString(),
+      message,
       type: SnackBarType.error,
       duration: const Duration(seconds: 5),
     );
@@ -282,7 +446,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     final canSubmit =
         _provider != null &&
         _branch != null &&
-        (_notesController.text.trim().isNotEmpty || _attachment != null) &&
+        (_notesController.text.trim().isNotEmpty || _attachments.isNotEmpty) &&
         !_isSubmitting;
 
     return Center(
@@ -370,7 +534,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                   label: 'invoice.request_details'.tr(),
                   complete:
                       _notesController.text.trim().isNotEmpty ||
-                      _attachment != null,
+                      _attachments.isNotEmpty,
                 ),
               ],
             ),
@@ -384,6 +548,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                   _RequiredLabel('invoice.provider'.tr()),
                   SizedBox(height: 8.h),
                   _SelectionButton(
+                    key: _providerKey,
                     label:
                         _provider?.providerName.trim() ??
                         'invoice.choose_provider'.tr(),
@@ -403,6 +568,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                   _RequiredLabel('invoice.branch'.tr()),
                   SizedBox(height: 8.h),
                   _SelectionButton(
+                    key: _branchKey,
                     label: _branch == null
                         ? 'invoice.choose_branch'.tr()
                         : _branch!.branchName.trim().isEmpty
@@ -434,6 +600,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
               icon: Icons.edit_note_rounded,
               title: 'invoice.request_details'.tr(),
               child: Column(
+                key: _detailsKey,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -455,6 +622,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                   ),
                   SizedBox(height: 8.h),
                   TextField(
+                    key: _requestFieldKey,
                     controller: _notesController,
                     enabled: !_isSubmitting,
                     minLines: 3,
@@ -495,6 +663,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                   ),
                   SizedBox(height: 8.h),
                   Row(
+                    key: _uploadButtonsKey,
                     children: [
                       Expanded(
                         child: _AttachmentAction(
@@ -517,33 +686,46 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                       ),
                     ],
                   ),
-                  if (_attachment != null) ...[
+                  if (_attachments.isNotEmpty) ...[
                     SizedBox(height: 14.h),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(14.r),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 10,
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 8.w,
+                        mainAxisSpacing: 8.h,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount: _attachments.length,
+                      itemBuilder: (_, index) => ClipRRect(
+                        borderRadius: BorderRadius.circular(12.r),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
                             Image.file(
-                              File(_attachment!.path),
+                              File(_attachments[index].path),
                               fit: BoxFit.cover,
                             ),
-                            PositionedDirectional(
-                              top: 10.h,
-                              end: 10.w,
-                              child: Material(
-                                color: Colors.black.withValues(alpha: 0.55),
-                                shape: const CircleBorder(),
-                                child: IconButton(
-                                  onPressed: _isSubmitting
-                                      ? null
-                                      : () =>
-                                            setState(() => _attachment = null),
-                                  color: Colors.white,
-                                  icon: const Icon(Icons.close_rounded),
-                                  tooltip: 'common.delete'.tr(),
+                            Positioned(
+                              top: 4.h,
+                              right: 4.w,
+                              child: GestureDetector(
+                                onTap: _isSubmitting
+                                    ? null
+                                    : () => _removeAttachment(index),
+                                child: Container(
+                                  width: 22.w,
+                                  height: 22.w,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    size: 13.sp,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -774,6 +956,7 @@ class _SelectionButton extends StatelessWidget {
   final bool isSelected;
 
   const _SelectionButton({
+    super.key,
     required this.label,
     required this.supportingText,
     required this.onTap,

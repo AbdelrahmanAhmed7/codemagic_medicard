@@ -130,6 +130,7 @@ class AppRouter {
               cardNo: state.uri.queryParameters['cardNo'],
               initialProviderId: extra?['providerId'] as int?,
               initialProviderName: extra?['providerName'] as String?,
+              runTutorial: extra?['runTutorial'] as bool? ?? false,
             );
           },
         ),
