@@ -89,7 +89,7 @@ class FirebaseNotificationService {
 
   void _openDestination(String destination) {
     if (_disposed) return;
-    _pendingDestination = notificationDestination({'route': destination});
+    _pendingDestination = destination;
     _flushPendingDestination();
   }
 
@@ -131,7 +131,7 @@ class FirebaseNotificationService {
     if (payload.startsWith('http://') || payload.startsWith('https://')) {
       unawaited(UrlLauncherService().launchURL(payload));
     } else {
-      _openDestination(payload);
+      _openDestination(validateRoute(payload));
     }
   }
 
@@ -145,7 +145,12 @@ class FirebaseNotificationService {
     if (pdfUrl.isNotEmpty) {
       unawaited(UrlLauncherService().launchURL(pdfUrl));
     } else {
-      _openDestination(notificationDestination(data));
+      // If the message is invoice-related but has no PDF yet, go to history.
+      final hasInvoiceKey = data.containsKey('invoice_pdf_url');
+      final destination = hasInvoiceKey
+          ? '/medicard-invoices/history'
+          : notificationDestination(data);
+      _openDestination(destination);
     }
   }
 }

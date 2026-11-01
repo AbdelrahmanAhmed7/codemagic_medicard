@@ -33,7 +33,8 @@ class LocalNotificationService implements NotificationDisplay {
         ),
       ),
       onDidReceiveNotificationResponse: (response) {
-        onOpen?.call(notificationDestination({'route': response.payload}));
+        final payload = response.payload ?? '';
+        onOpen?.call(payload);
       },
     );
     await _plugin
@@ -47,9 +48,8 @@ class LocalNotificationService implements NotificationDisplay {
   Future<String?> initialDestination() async {
     final launch = await _plugin.getNotificationAppLaunchDetails();
     if (launch?.didNotificationLaunchApp != true) return null;
-    return notificationDestination({
-      'route': launch?.notificationResponse?.payload,
-    });
+    // Return the raw payload — caller decides whether it's a URL or route.
+    return launch?.notificationResponse?.payload;
   }
 
   @override
@@ -65,7 +65,9 @@ class LocalNotificationService implements NotificationDisplay {
     final pdfUrl = text('invoice_pdf_url');
     final payload = pdfUrl.isNotEmpty
         ? pdfUrl
-        : notificationDestination(message.data);
+        : message.data.containsKey('invoice_pdf_url')
+            ? '/medicard-invoices/history'
+            : notificationDestination(message.data);
 
     await _plugin.show(
       id:

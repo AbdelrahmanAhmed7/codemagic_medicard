@@ -19,3 +19,9 @@ String notificationDestination(Map<String, dynamic> data) {
   }
   return uri.path;
 }
+
+/// Validates a raw in-app route string. Returns the route if allowed,
+/// or the fallback home route otherwise.
+String validateRoute(String route) {
+  return notificationDestination({'route': route});
+}
