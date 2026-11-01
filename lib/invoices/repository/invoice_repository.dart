@@ -18,10 +18,12 @@ class InvoiceRepository {
     required String lang,
     required int providerId,
     int page = 1,
+    int pageSize = 10,
   }) => _apiService.getProviderBranches(
     lang: lang,
     providerId: providerId,
     page: page,
+    pageSize: pageSize,
   );
 
   Future<CreatedInvoice> createInvoice({

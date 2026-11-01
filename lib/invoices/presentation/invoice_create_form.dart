@@ -239,24 +239,49 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   Future<void> _chooseBranch() async {
     final provider = _provider;
     if (provider == null) return;
+
+    // Load all branches once, then filter client-side by query.
+    List<InvoiceBranch>? allBranches;
+
     final branch = await _showPagedPicker<InvoiceBranch>(
       title: 'invoice.choose_branch'.tr(),
-      allowSearch: false,
+      searchHint: 'invoice.search_branches'.tr(),
+      allowSearch: true,
       titleFontSize: 14,
       subtitleFontSize: 12,
-      loadPage: (_, page) => widget.repository.getProviderBranches(
-        lang: _lang,
-        providerId: provider.providerId,
-        page: page,
-      ),
-      titleOf: (item) => item.displayAddress,
-      subtitleOf: (item) {
-        final address = item.displayAddress;
-        final name = item.branchName.trim().isNotEmpty
-            ? item.branchName.trim()
-            : item.area.trim();
-        return (name.isNotEmpty && name != address) ? name : '';
+      loadPage: (query, page) async {
+        // Fetch all branches on first load (page 1 with large pageSize).
+        if (allBranches == null || page == 1) {
+          final result = await widget.repository.getProviderBranches(
+            lang: _lang,
+            providerId: provider.providerId,
+            page: 1,
+            pageSize: 100,
+          );
+          allBranches = result.items;
+        }
+        // Filter client-side.
+        final filtered = query.trim().isEmpty
+            ? allBranches!
+            : allBranches!.where((b) {
+                final q = query.trim().toLowerCase();
+                return b.branchName.toLowerCase().contains(q) ||
+                    b.address.toLowerCase().contains(q) ||
+                    b.area.toLowerCase().contains(q) ||
+                    b.city.toLowerCase().contains(q) ||
+                    b.government.toLowerCase().contains(q);
+              }).toList();
+        return InvoicePage<InvoiceBranch>(
+          items: filtered,
+          currentPage: 1,
+          totalPages: 1,
+          hasNextPage: false,
+        );
       },
+      titleOf: (item) => item.branchName.trim().isNotEmpty
+          ? item.branchName.trim()
+          : item.area.trim(),
+      subtitleOf: (item) => item.address,
       leadingBuilder: (_) =>
           const _PickerIcon(icon: Icons.location_on_outlined),
       isSelected: (item) => item.locationId == _branch?.locationId,
