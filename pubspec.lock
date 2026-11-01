@@ -1094,7 +1094,7 @@ packages:
     source: hosted
     version: "13.0.1"
   permission_handler_apple:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: permission_handler_apple
       sha256: b69e6b8300f9584af5ab81b41cdaa544e1b45e6fca0a30b0f9a9a120d90fc8a5
