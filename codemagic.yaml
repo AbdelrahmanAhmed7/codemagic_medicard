@@ -36,6 +36,19 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+        release_notes:
+          en-US: |
+            - Searchable branch picker in new invoice request
+            - Invoice PDF download button in invoice history
+            - Tap invoice notification to open PDF in browser
+            - Fixed notification icon to use app logo
+            - Various bug fixes and improvements
+          ar-SA: |
+            - إمكانية البحث في قائمة الفروع عند إنشاء طلب فاتورة
+            - زر تحميل الفاتورة PDF في سجل الفواتير
+            - الضغط على إشعار الفاتورة يفتح المتصفح لتحميل الـ PDF
+            - إصلاح أيقونة الإشعارات لتعرض لوجو التطبيق
+            - إصلاحات وتحسينات عامة
       email:
         recipients:
           - info@medicardeg.com
