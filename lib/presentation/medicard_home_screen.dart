@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../core/constants/api_result.dart';
@@ -40,8 +39,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   static bool _hasShownSummerPopupThisSession = false;
 
   late AnimationController _animController;
-  late Animation<double> _fadeAnim;
-  late Animation<Offset> _slideAnim;
   bool _isGuest = false;
 
   // Key attached to the "طلب جديد" action card
@@ -57,11 +54,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.06),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
     // Kick off the guest check + data fetch after the first frame so that
     // the BlocProvider is fully wired into the tree. The cubit starts in
@@ -206,35 +198,35 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
         return Scaffold(
           backgroundColor: const Color(0xFFF0F4F9),
-          body: successData != null
-              ? FadeTransition(
-                  opacity: _fadeAnim,
-                  child: SlideTransition(
-                    position: _slideAnim,
-                    child: _buildBody(
-                      successData.homeInfo.data!,
-                      successData.personalInfo?.data,
-                      successData.sliderInfo?.data ?? [],
-                    ),
-                  ),
-                )
-              : Stack(
-                  children: [
-                    _buildTopDecoration(),
-                    SafeArea(
-                      child: Column(
+          body: Stack(
+            children: [
+              // ── Blue arc — always visible ──────────────────────────────
+              _buildTopDecoration(),
+              // ── Content ────────────────────────────────────────────────
+              SafeArea(
+                child: successData != null
+                    ? _buildScrollableContent(
+                        successData.homeInfo.data!,
+                        successData.personalInfo?.data,
+                        successData.sliderInfo?.data ?? [],
+                      )
+                    : Column(
                         children: [
                           _buildHeader(),
                           Expanded(
                             child: isLoading
-                                ? const _HomeShimmer()
+                                ? const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF1E3A8A),
+                                    ),
+                                  )
                                 : _buildEmptyState(),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -314,6 +306,10 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   }
 
   Future<void> _showSummerPopupsOnce() async {
+    // Summer offer runs from 2027-05-10 to 2027-10-30 only.
+    final now = DateTime.now();
+    if (now.isBefore(DateTime(2027, 5, 10)) ||
+        now.isAfter(DateTime(2027, 10, 30))) return;
     if (_hasShownSummerPopupThisSession || !mounted) return;
     _hasShownSummerPopupThisSession = true;
 
@@ -544,7 +540,10 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
   // ─── Body ─────────────────────────────────────────────────────────────────
 
-  Widget _buildBody(
+  // Scrollable content shown only when data is available.
+  // The blue arc and header live OUTSIDE this widget (in the Scaffold Stack)
+  // so they never flicker between loading and success states.
+  Widget _buildScrollableContent(
     CardHomeInfoDataModel homeData,
     CardPersonalInfoDataModel? personalData,
     List<SliderProvider> sliderData,
@@ -554,52 +553,41 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
+          // Header + welcome text on top of the arc (arc is in parent Stack).
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopDecoration(),
-              SafeArea(
+              _buildHeader(),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(),
-                    // Welcome text sits on top of the blue arc
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${'home.hello'.tr()} ${homeData.firstName} 👋',
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          SizedBox(height: 22.h),
-                        ],
+                    Text(
+                      '${'home.hello'.tr()} ${homeData.firstName} 👋',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    // Card (overlapping the arc)
-                    // Guest guard: tapping the card never opens
-                    // /medicard-my-card or edit-profile for guests.
-                    // Guests are sent to the selection page (login hub).
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_isGuest) {
-                            context.push('/medicard');
-                            return;
-                          }
-                          if (personalData != null) {
-                            _openMyCard(personalData);
-                          }
-                        },
-                        child: _buildMediCard(homeData),
-                      ),
-                    ),
+                    SizedBox(height: 22.h),
                   ],
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                child: GestureDetector(
+                  onTap: () {
+                    if (_isGuest) {
+                      context.push('/medicard');
+                      return;
+                    }
+                    if (personalData != null) {
+                      _openMyCard(personalData);
+                    }
+                  },
+                  child: _buildMediCard(homeData),
                 ),
               ),
             ],
@@ -624,10 +612,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                     },
                   ),
                 ],
-
                 SizedBox(height: 8.h),
-
-                // Section title
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: Row(
@@ -652,16 +637,11 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                     ],
                   ),
                 ),
-
                 SizedBox(height: 4.h),
-
-                // Actions grid
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.w),
                   child: _buildQuickActions(personalData),
                 ),
-
-                // Khusm Logo at bottom
                 Center(
                   child: Image.asset(
                     AppAssets.khusm,
@@ -1317,71 +1297,6 @@ class _SummerTypeButton extends StatelessWidget {
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Home Shimmer Skeleton ───────────────────────────────────────────────────
-
-class _HomeShimmer extends StatelessWidget {
-  const _HomeShimmer();
-
-  @override
-  Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: const Color(0xFFE2E8F0),
-      highlightColor: const Color(0xFFF8FAFC),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── MediCard skeleton ──────────────────────────────────────────
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Container(
-                height: 190.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24.r),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 28.h),
-
-            // ── Section title skeleton ─────────────────────────────────────
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
-              child: Container(
-                width: 120.w,
-                height: 16.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 16.h),
-
-            // ── Action cards skeleton (5 cards) ───────────────────────────
-            ...List.generate(
-              5,
-              (i) => Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 14.h),
-                child: Container(
-                  height: 72.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(22.r),
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
