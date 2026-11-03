@@ -3,9 +3,28 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import 'app_failure.dart';
+import 'backend_message_exception.dart';
+
 class ErrorHandler {
   static String handle(dynamic error, [BuildContext? context]) {
+    if (error is BackendMessageException) return error.message;
+
     if (error is DioException) {
+      final mappedFailure = error.error;
+      if (mappedFailure is AppFailure) {
+        if (mappedFailure.type == AppFailureType.network) {
+          return context != null
+              ? 'errors.no_internet'.tr()
+              : "No internet connection. Please check your network.";
+        }
+        if (mappedFailure.type == AppFailureType.timeout) {
+          return context != null
+              ? 'errors.connection_timeout'.tr()
+              : "Connection timeout, please try again later.";
+        }
+      }
+
       if (error.type == DioExceptionType.connectionTimeout ||
           error.type == DioExceptionType.receiveTimeout ||
           error.type == DioExceptionType.sendTimeout) {

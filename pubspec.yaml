@@ -4,7 +4,7 @@ publish_to: 'none'
 
 
  
-version: 1.0.8+14
+version: 1.0.9+15
 
 environment:
   sdk: ^3.10.7
@@ -53,6 +53,7 @@ dependencies:
   # 7.x uses the decoupled material_ui package, while this app still uses
   # Flutter's in-SDK Material widgets. Keep both sides on the same widget tree.
   pinput: ^6.0.2
+  smart_auth: ^3.2.0
 
 dev_dependencies:
   flutter_test:

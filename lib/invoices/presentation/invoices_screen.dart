@@ -8,6 +8,7 @@ import '../../core/constants/constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/helpers/shared_pref_helper.dart';
 import '../../core/services/url_launcher_service.dart';
+import '../../core/theming/app_text_styles.dart';
 import '../../core/theming/app_toast.dart';
 import '../data/invoice_models.dart';
 import '../repository/invoice_repository.dart';
@@ -774,14 +775,18 @@ class _InvoiceCard extends StatelessWidget {
                       onPressed: () =>
                           UrlLauncherService().launchURL(invoice.invoicePdfUrl),
                       icon: Icon(Icons.download_rounded, size: 17.sp),
-                      label: Text('invoice.download_pdf'.tr()),
+                      label: Text(
+                        'invoice.download_pdf'.tr(),
+                        style: AppTextStyles.custom(
+                          context,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F766E),
+                        ),
+                      ),
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF0F766E),
                         visualDensity: VisualDensity.compact,
-                        textStyle: TextStyle(
-                          fontSize: 11.5.sp,
-                          fontWeight: FontWeight.w700,
-                        ),
                       ),
                     ),
                   if (onCancel != null)

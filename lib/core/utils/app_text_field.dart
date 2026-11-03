@@ -115,6 +115,7 @@ class _AppTextFieldState extends State<AppTextField>
   @override
   Widget build(BuildContext context) {
     return FormField<String>(
+      initialValue: widget.controller?.text,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       validator: widget.validator,
       builder: (fieldState) {

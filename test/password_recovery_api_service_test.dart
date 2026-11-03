@@ -153,4 +153,33 @@ void main() {
       ),
     );
   });
+
+  test('network failures remain typed Dio exceptions for the UI mapper', () {
+    final dio = Dio()
+      ..interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            handler.reject(
+              DioException.connectionError(
+                requestOptions: options,
+                reason: 'Network is unreachable',
+              ),
+            );
+          },
+        ),
+      );
+
+    expect(
+      () => PasswordRecoveryApiService(
+        dio,
+      ).forgotPassword(lang: 'en', mobileNumber: '01012345678'),
+      throwsA(
+        isA<DioException>().having(
+          (error) => error.type,
+          'type',
+          DioExceptionType.connectionError,
+        ),
+      ),
+    );
+  });
 }

@@ -7,14 +7,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pinput/pinput.dart';
+import 'package:smart_auth/smart_auth.dart';
 
 import '../core/constants/app_assets.dart';
+import '../core/network/api_error_handler.dart';
 import '../core/theming/app_colors.dart';
 import '../core/theming/app_toast.dart';
 import '../core/theming/app_text_styles.dart';
 import '../core/utils/app_button.dart';
 import '../core/utils/app_text_field.dart';
 import '../core/utils/language_helper.dart';
+import '../core/utils/otp_sms_retriever.dart';
 import '../service/password_recovery_api_service.dart';
 
 class MedicardForgotPasswordScreen extends StatefulWidget {
@@ -43,11 +46,14 @@ class _MedicardForgotPasswordScreenState
   bool _isLoading = false;
   String _mobileNumber = '';
   int _resendSeconds = 0;
+  int _otpRequestId = 0;
   Timer? _resendTimer;
+  OtpSmsRetriever? _otpSmsRetriever;
 
   @override
   void dispose() {
     _resendTimer?.cancel();
+    unawaited(_otpSmsRetriever?.dispose());
     _mobileController.dispose();
     _otpController.dispose();
     _passwordController.dispose();
@@ -107,6 +113,13 @@ class _MedicardForgotPasswordScreenState
     if (isResend && _resendSeconds > 0) return;
     final mobileNumber = _normalizedMobileNumber();
     setState(() => _isLoading = true);
+
+    final previousSmsRetriever = _otpSmsRetriever;
+    final smsRetriever = OtpSmsRetriever(SmartAuth.instance);
+    _otpSmsRetriever = smsRetriever;
+    unawaited(previousSmsRetriever?.dispose());
+    smsRetriever.startListening();
+
     try {
       final message = await widget.apiService.forgotPassword(
         lang: context.locale.languageCode,
@@ -117,11 +130,16 @@ class _MedicardForgotPasswordScreenState
       setState(() {
         _mobileNumber = mobileNumber;
         _otpSent = true;
+        _otpRequestId++;
         _otpController.clear();
       });
       _startResendTimer();
     } catch (error) {
-      if (mounted) showErrorToast(error.toString());
+      if (identical(_otpSmsRetriever, smsRetriever)) {
+        _otpSmsRetriever = null;
+      }
+      await smsRetriever.dispose();
+      if (mounted) showErrorToast(ErrorHandler.handle(error, context));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -146,7 +164,7 @@ class _MedicardForgotPasswordScreenState
       showSuccessToast(message);
       context.go('/medicard-login');
     } catch (error) {
-      if (mounted) showErrorToast(error.toString());
+      if (mounted) showErrorToast(ErrorHandler.handle(error, context));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -300,8 +318,11 @@ class _MedicardForgotPasswordScreenState
           child: Directionality(
             textDirection: ui.TextDirection.ltr,
             child: Pinput(
+              key: ValueKey('otp-$_otpRequestId'),
               controller: _otpController,
               length: _otpLength,
+              smsRetriever: _otpSmsRetriever,
+              autofillHints: const [AutofillHints.oneTimeCode],
               mainAxisAlignment: MainAxisAlignment.center,
               separatorBuilder: (_) => SizedBox(width: 12.w),
               keyboardType: TextInputType.number,
