@@ -200,6 +200,7 @@
       "otp_instruction": "Please enter the OTP we sent to {phone}",
       "otp_expire_in": "The verify code will expire in {time}",
       "resend_code": "Resend Code",
+      "resend_in": "Resend in {time}",
       "otp_resend_success": "OTP resent successfully",
       "otp_verified": "OTP verified successfully",
       "verifying": "Verifying...",
@@ -208,7 +209,9 @@
         "phone_required": "Please enter your phone number",
         "phone_hint": "Enter phone number",
         "phone_starts_with_zero": "Please enter the phone number without starting with 0",
-        "phone_invalid": "Please enter a valid Egyptian phone number starting with 10, 11, 12, or 15"
+        "phone_invalid": "Please enter a valid Egyptian phone number starting with 10, 11, 12, or 15",
+        "otp_required": "Please enter the verification code",
+        "otp_incomplete": "Please enter the complete 4-digit code"
       }
     },
     "reset_password": {
@@ -267,8 +270,6 @@
     "personal_information": "Personal Information",
     "family_members": "Family Members",
     "insurance_plan": "Insurance Plan",
-    "settings": "Settings",
-    "replay_new_order_tutorial": "Replay tutorial",
     "change_password": "Change Password",
     "language": "Language",
     "help_support": "Help & Support",
@@ -431,7 +432,7 @@
     "directions": "Directions"
   },
   "invoice": {
-    "history_hint": "Filter by status or pull down to refresh your requests.",
+    "history_hint": "Pull down anytime to refresh your requests.",
     "all_statuses": "All",
     "empty_filter": "No requests with this status yet",
     "load_failed": "We couldn't load your requests. Please try again.",
@@ -452,6 +453,8 @@
     "search_providers": "Search provider name",
     "provider": "Provider",
     "branch": "Branch",
+    "address": "Address",
+    "requested_service": "Requested service",
     "choose_branch": "Choose branch",
     "search_branches": "Search branches",
     "notes": "Request details",
@@ -477,6 +480,7 @@
     "cancel_title": "Cancel invoice",
     "cancel_reason": "Cancellation reason",
     "cancel_reason_hint": "Enter the cancellation reason",
+    "cancel_reason_required": "Please enter the cancellation reason",
     "confirm_cancel": "Confirm cancellation"
   },
   "notifications": {
@@ -964,6 +968,9 @@
       "password_length": "Password must be at least 8 characters",
       "confirm_password_required": "Confirm password is required",
       "passwords_not_match": "Passwords do not match",
+      "name_length": "Name must be at least 2 characters",
+      "email_invalid": "Please enter a valid email address",
+      "national_id_invalid": "National ID must be exactly 14 digits",
       "card_length": "Card number must be 12 digits",
       "card_numbers_only": "Card number must contain numbers only"
     }

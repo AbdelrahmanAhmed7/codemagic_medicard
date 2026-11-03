@@ -200,6 +200,7 @@
       "otp_instruction": "يرجى إدخال رمز التحقق الذي أرسلناه إلى {phone}",
       "otp_expire_in": "ستنتهي صلاحية رمز التحقق خلال {time}",
       "resend_code": "إعادة إرسال الرمز",
+      "resend_in": "إعادة الإرسال خلال {time}",
       "otp_resend_success": "تم إعادة إرسال رمز التحقق بنجاح",
       "otp_verified": "تم التحقق من الرمز بنجاح",
       "verifying": "جاري التحقق...",
@@ -208,7 +209,9 @@
         "phone_required": "يرجى إدخال رقم هاتفك",
         "phone_hint": "أدخل رقم الهاتف",
         "phone_starts_with_zero": "يرجى إدخال رقم الهاتف بدون البدء بصفر",
-        "phone_invalid": "يرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 10 أو 11 أو 12 أو 15"
+        "phone_invalid": "يرجى إدخال رقم هاتف مصري صحيح يبدأ بـ 10 أو 11 أو 12 أو 15",
+        "otp_required": "يرجى إدخال رمز التحقق",
+        "otp_incomplete": "يرجى إدخال رمز التحقق كاملًا والمكون من 4 أرقام"
       }
     },
     "reset_password": {
@@ -263,8 +266,6 @@
     "personal_information": "المعلومات الشخصية",
     "family_members": "أفراد العائلة",
     "insurance_plan": "خطة التأمين",
-    "settings": "الإعدادات",
-    "replay_new_order_tutorial": "إعادة عرض الشرح",
     "change_password": "تغيير كلمة المرور",
     "language": "اللغة",
     "help_support": "المساعدة والدعم",
@@ -425,7 +426,7 @@
     "directions": "الاتجاهات"
   },
   "invoice": {
-    "history_hint": "اختر الحالة لتصفية طلباتك، أو اسحب لأسفل للتحديث.",
+    "history_hint": "اسحب لأسفل في أي وقت لتحديث طلباتك.",
     "all_statuses": "الكل",
     "empty_filter": "لا توجد طلبات بهذه الحالة حاليًا",
     "load_failed": "تعذر تحميل طلباتك. حاول مرة أخرى.",
@@ -446,6 +447,8 @@
     "search_providers": "ابحث عن مقدم الخدمة",
     "provider": "مقدم الخدمة",
     "branch": "الفرع",
+    "address": "العنوان",
+    "requested_service": "الخدمة المطلوبة",
     "choose_branch": "اختيار الفرع",
     "search_branches": "ابحث عن فرع",
     "notes": "تفاصيل الطلب",
@@ -471,6 +474,7 @@
     "cancel_title": "إلغاء الفاتورة",
     "cancel_reason": "سبب الإلغاء",
     "cancel_reason_hint": "اكتب سبب إلغاء الفاتورة",
+    "cancel_reason_required": "يرجى كتابة سبب الإلغاء",
     "confirm_cancel": "تأكيد الإلغاء"
   },
   "notifications": {
@@ -958,6 +962,9 @@
       "password_length": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
       "confirm_password_required": "تأكيد كلمة المرور مطلوب",
       "passwords_not_match": "كلمات المرور غير متطابقة",
+      "name_length": "يجب ألا يقل الاسم عن حرفين",
+      "email_invalid": "يرجى إدخال بريد إلكتروني صحيح",
+      "national_id_invalid": "يجب أن يتكون الرقم القومي من 14 رقمًا",
       "card_length": "رقم الكارد يجب أن يكون 12 رقم",
       "card_numbers_only": "رقم الكارد يجب أن يحتوي على أرقام فقط"
     }
