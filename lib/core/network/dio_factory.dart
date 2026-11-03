@@ -43,10 +43,11 @@ class DioFactory {
     // Error mapping
     dio.interceptors.add(ErrorMappingInterceptor());
 
-    // Retry interceptor
+    // Retry interceptor — pass this Dio instance so retries use the correct base URL
     dio.interceptors.add(
       RetryInterceptor(
         connectivityService: ConnectivityService.instance,
+        dio: dio,
         maxRetries: 2,
         baseDelay: const Duration(seconds: 1),
       ),
@@ -77,16 +78,14 @@ class DioFactory {
       ..options.connectTimeout = timeout
       ..options.receiveTimeout = timeout;
 
-    // Add headers without token (login doesn't need token)
     dio.options.headers = {'Accept': 'application/json'};
-
-    // Add interceptors
     dio.interceptors.add(ErrorMappingInterceptor());
 
     dio.interceptors.add(
       RetryInterceptor(
         connectivityService: ConnectivityService.instance,
-        maxRetries: 2, // Less retries for login
+        dio: dio,
+        maxRetries: 2,
         baseDelay: const Duration(seconds: 1),
       ),
     );
@@ -127,10 +126,11 @@ class DioFactory {
     // Map low-level Dio exceptions to domain failures
     _dio?.interceptors.add(ErrorMappingInterceptor());
 
-    // Add retry interceptor
+    // Add retry interceptor — pass _dio so retries use the same MCI instance
     _dio?.interceptors.add(
       RetryInterceptor(
         connectivityService: ConnectivityService.instance,
+        dio: _dio!,
         maxRetries: 3,
         baseDelay: const Duration(seconds: 2),
       ),

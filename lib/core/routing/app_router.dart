@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:medicard/core/di/service_locator.dart';
 
+import '../../core/constants/constants.dart';
+import '../../core/helpers/shared_pref_helper.dart';
 import '../../invoices/presentation/invoices_screen.dart';
 import '../../medicard_network/logic/medicard_network_cubit.dart';
 import '../../medicard_network/presentation/medicard_network_screen.dart';
@@ -18,7 +21,6 @@ import '../../presentation/medicard_selection_screen.dart';
 import '../../presentation/medicard_signup_screen.dart';
 import '../../presentation/medicard_splash_screen.dart';
 import '../../presentation/medicard_support_screen.dart';
-import '../di/service_locator.dart';
 
 class AppRouter {
   static Future<String> getInitialLocation() async {
@@ -61,9 +63,30 @@ class AppRouter {
           path: '/medicard-home',
           builder: (context, state) {
             final cardNo = state.uri.queryParameters['cardNo'];
-            return BlocProvider(
-              create: (context) => sl<MedicardHomeCubit>(),
-              child: MediCardHomeScreen(cardNo: cardNo),
+            return FutureBuilder<String>(
+              future: SharedPrefHelper.getString(SharedPrefKeys.medicardCardNo),
+              builder: (context, snapshot) {
+                // While resolving, show nothing (splash already shown)
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                // IDOR guard: if a cardNo came via URL, verify it matches the
+                // locally stored card number. Mismatch means a crafted deep-link
+                // or notification — redirect to the selection screen.
+                final storedCardNo = snapshot.data?.trim() ?? '';
+                final safeCardNo = (cardNo != null &&
+                        cardNo.trim().isNotEmpty &&
+                        storedCardNo.isNotEmpty &&
+                        cardNo.trim() != storedCardNo)
+                    ? null // reject the foreign cardNo
+                    : cardNo;
+                return BlocProvider(
+                  create: (context) => sl<MedicardHomeCubit>(),
+                  child: MediCardHomeScreen(cardNo: safeCardNo),
+                );
+              },
             );
           },
         ),

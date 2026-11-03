@@ -395,7 +395,8 @@ class _MedicardEditProfileScreenState extends State<MedicardEditProfileScreen> {
       showErrorToast('auth.signup.validation.last_name_required'.tr());
       return;
     }
-    if (_phoneController.text.trim().length < 11) {
+    final phoneLength = _phoneController.text.trim().length;
+    if (phoneLength < 10 || phoneLength > 11) {
       showErrorToast('auth.login.validation.phone_length'.tr());
       return;
     }

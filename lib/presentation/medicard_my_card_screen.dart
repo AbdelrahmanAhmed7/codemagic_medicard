@@ -43,12 +43,14 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
 
   Future<void> _refreshData() async {
     setState(() => _isLoading = true);
-    await context.read<MedicardHomeCubit>().getHomeInfo(
-      cardNo: widget.cardNo,
-      lang: context.locale.languageCode,
-    );
-    // Note: The BlocConsumer/Builder will handle the state update if we wrap this screen in a BlocProvider or use the existing one.
-    setState(() => _isLoading = false);
+    try {
+      await context.read<MedicardHomeCubit>().getHomeInfo(
+        cardNo: widget.cardNo,
+        lang: context.locale.languageCode,
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -223,7 +225,7 @@ class _MedicardMyCardScreenState extends State<MedicardMyCardScreen> {
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
+                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.tryParse(data.expireDate) ?? DateTime(2000))}',
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: Colors.white.withValues(alpha: 0.9),

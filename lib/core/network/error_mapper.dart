@@ -25,15 +25,10 @@ AppFailure mapDioException(DioException exception) {
     if (statusCode == 404) return const AppFailure.notFound();
     if (statusCode >= 500) return AppFailure.server(statusCode: statusCode);
 
-    // For 400 errors, check if response has success: true (some APIs return data even on 400)
+    // For 400 errors, extract the message from the response body
     if (statusCode == 400) {
       final data = exception.response?.data;
       if (data != null && data is Map) {
-        if (data['success'] == true && data['data'] != null) {
-          // This is actually a success - return a special failure that the repository can handle
-          return const AppFailure.server(statusCode: 200);
-        }
-        // Get error message from response
         final message = data['message'] ?? 'Bad request';
         return AppFailure.unexpected(message.toString());
       }

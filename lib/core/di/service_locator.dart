@@ -1,5 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+
+import '../network/connectivity_service.dart';
+import '../network/error_mapping_interceptor.dart';
+import '../network/retry_inceptor.dart';
 
 import '../../domain/medicard_repository.dart';
 import '../../domain/usecases/activate_card_usecase.dart';
@@ -36,6 +42,29 @@ Future<void> setupServiceLocator() async {
     ..options.receiveTimeout = const Duration(seconds: 30)
     ..options.sendTimeout = const Duration(seconds: 30)
     ..options.headers = {'Accept': 'application/json'};
+
+  invoiceDio.interceptors.add(ErrorMappingInterceptor());
+  invoiceDio.interceptors.add(
+    RetryInterceptor(
+      connectivityService: ConnectivityService.instance,
+      dio: invoiceDio,
+      maxRetries: 2,
+      baseDelay: const Duration(seconds: 1),
+    ),
+  );
+  if (kDebugMode) {
+    invoiceDio.interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: false,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
+        compact: false,
+        maxWidth: 90,
+      ),
+    );
+  }
 
   sl.registerLazySingleton<MedicardApiService>(
     () => MedicardApiService(medicardDio),

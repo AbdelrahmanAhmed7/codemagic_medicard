@@ -309,7 +309,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     // Summer offer runs from 2027-05-10 to 2027-10-30 only.
     final now = DateTime.now();
     if (now.isBefore(DateTime(2027, 5, 10)) ||
-        now.isAfter(DateTime(2027, 10, 30))) return;
+        now.isAfter(DateTime(2027, 10, 30))) { return; }
     if (_hasShownSummerPopupThisSession || !mounted) return;
     _hasShownSummerPopupThisSession = true;
 
@@ -719,7 +719,7 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.parse(data.expireDate))}',
+                        '${'insurance_plan.valid_until'.tr()}: ${DateFormat('dd-MM-yyyy').format(DateTime.tryParse(data.expireDate) ?? DateTime(2000))}',
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: Colors.white.withValues(alpha: 0.9),

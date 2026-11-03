@@ -1,65 +1,50 @@
 import 'package:dio/dio.dart';
 
 import 'connectivity_service.dart';
-import 'dio_factory.dart';
 
-/// Interceptor to retry failed requests with exponential backoff
+/// Interceptor that retries failed requests with exponential backoff.
+/// The [dio] parameter must be the same Dio instance that owns this interceptor
+/// so retries are replayed through the correct base URL and headers.
 class RetryInterceptor extends Interceptor {
   final ConnectivityService _connectivityService;
+  final Dio _dio;
   final int maxRetries;
   final Duration baseDelay;
 
   RetryInterceptor({
     required ConnectivityService connectivityService,
+    required Dio dio,
     this.maxRetries = 3,
     this.baseDelay = const Duration(seconds: 2),
-  }) : _connectivityService = connectivityService;
+  })  : _connectivityService = connectivityService,
+        _dio = dio;
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Only retry on network errors or timeouts
-    if (!_shouldRetry(err)) {
-      return super.onError(err, handler);
-    }
+    if (!_shouldRetry(err)) return super.onError(err, handler);
 
-    // Check if device is offline
     final isOnline = await _connectivityService.checkConnectivity();
-    if (!isOnline) {
-      // Don't retry if offline
-      return super.onError(err, handler);
-    }
+    if (!isOnline) return super.onError(err, handler);
 
     final retryCount = err.requestOptions.extra['retryCount'] as int? ?? 0;
+    if (retryCount >= maxRetries) return super.onError(err, handler);
 
-    if (retryCount >= maxRetries) {
-      // Max retries reached
-      return super.onError(err, handler);
-    }
-
-    // Calculate delay with exponential backoff
     final delay = Duration(
-      milliseconds: (baseDelay.inMilliseconds * (1 << retryCount)),
+      milliseconds: baseDelay.inMilliseconds * (1 << retryCount),
     );
-
     await Future.delayed(delay);
 
-    // Update retry count
     err.requestOptions.extra['retryCount'] = retryCount + 1;
 
     try {
-      // Retry the request using DioFactory's instance
-      final dio = await _getDioInstance();
-      final response = await dio.request(
+      final response = await _dio.request(
         err.requestOptions.path,
         data: err.requestOptions.data,
         queryParameters: err.requestOptions.queryParameters,
         options: Options(
           method: err.requestOptions.method,
           headers: err.requestOptions.headers,
-          extra: {
-            ...err.requestOptions.extra,
-            'retryCount': retryCount + 1,
-          },
+          extra: {...err.requestOptions.extra, 'retryCount': retryCount + 1},
           responseType: err.requestOptions.responseType,
           validateStatus: err.requestOptions.validateStatus,
         ),
@@ -68,13 +53,11 @@ class RetryInterceptor extends Interceptor {
         onReceiveProgress: err.requestOptions.onReceiveProgress,
       );
       return handler.resolve(response);
-    } catch (e) {
-      // If retry fails, continue with error
+    } catch (_) {
       return super.onError(err, handler);
     }
   }
 
-  /// Check if error should be retried
   bool _shouldRetry(DioException err) {
     return err.type == DioExceptionType.connectionTimeout ||
         err.type == DioExceptionType.receiveTimeout ||
@@ -83,10 +66,5 @@ class RetryInterceptor extends Interceptor {
         (err.type == DioExceptionType.unknown &&
             err.error != null &&
             err.error.toString().contains('SocketException'));
-  }
-
-  /// Get Dio instance from factory
-  Future<Dio> _getDioInstance() async {
-    return await DioFactory.getDio();
   }
 }
