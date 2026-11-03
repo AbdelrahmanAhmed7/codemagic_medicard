@@ -14,6 +14,7 @@ import '../../presentation/logic/medicard_home_cubit.dart';
 import '../../presentation/logic/medicard_login_cubit.dart';
 import '../../presentation/logic/medicard_support_cubit.dart';
 import '../../presentation/medicard_edit_profile_screen.dart';
+import '../../presentation/medicard_forgot_password_screen.dart';
 import '../../presentation/medicard_home_screen.dart';
 import '../../presentation/medicard_login_screen.dart';
 import '../../presentation/medicard_my_card_screen.dart';
@@ -60,6 +61,11 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: '/medicard-forgot-password',
+          builder: (context, state) =>
+              MedicardForgotPasswordScreen(apiService: sl()),
+        ),
+        GoRoute(
           path: '/medicard-home',
           builder: (context, state) {
             final cardNo = state.uri.queryParameters['cardNo'];
@@ -76,7 +82,8 @@ class AppRouter {
                 // locally stored card number. Mismatch means a crafted deep-link
                 // or notification — redirect to the selection screen.
                 final storedCardNo = snapshot.data?.trim() ?? '';
-                final safeCardNo = (cardNo != null &&
+                final safeCardNo =
+                    (cardNo != null &&
                         cardNo.trim().isNotEmpty &&
                         storedCardNo.isNotEmpty &&
                         cardNo.trim() != storedCardNo)

@@ -29,6 +29,7 @@ import '../../presentation/logic/medicard_login_cubit.dart';
 import '../../presentation/logic/medicard_support_cubit.dart';
 import '../../repository/medicard_repository_impl.dart';
 import '../../service/medicard_api_service.dart';
+import '../../service/password_recovery_api_service.dart';
 import '../network/dio_factory.dart';
 import '../services/location_service.dart';
 import '../services/url_launcher_service.dart';
@@ -68,6 +69,9 @@ Future<void> setupServiceLocator() async {
 
   sl.registerLazySingleton<MedicardApiService>(
     () => MedicardApiService(medicardDio),
+  );
+  sl.registerLazySingleton<PasswordRecoveryApiService>(
+    () => PasswordRecoveryApiService(medicardDio),
   );
   sl.registerLazySingleton<MedicardNetworkApiService>(
     () => MedicardNetworkApiService(medicardDio),

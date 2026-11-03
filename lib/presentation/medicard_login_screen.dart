@@ -77,7 +77,12 @@ class _MediCardLoginScreenState extends State<MediCardLoginScreen> {
             behavior: HitTestBehavior.opaque,
             child: SafeArea(
               child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 20.h + MediaQuery.of(context).padding.bottom),
+                padding: EdgeInsets.fromLTRB(
+                  16.w,
+                  20.h,
+                  16.w,
+                  20.h + MediaQuery.of(context).padding.bottom,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -169,7 +174,16 @@ class _MediCardLoginScreenState extends State<MediCardLoginScreen> {
                           return null;
                         },
                       ),
-                      SizedBox(height: 28.h),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => context.push('/medicard-forgot-password'),
+                          child: Text('auth.login.forgot_password'.tr()),
+                        ),
+                      ),
+                      SizedBox(height: 16.h),
 
                       AppButton(
                         text: 'auth.login.login_button'.tr(),
@@ -208,7 +222,9 @@ class _MediCardLoginScreenState extends State<MediCardLoginScreen> {
                                     lang: lang,
                                   );
                                 } else {
-                                  showErrorToast('auth.login.fill_all_fields'.tr());
+                                  showErrorToast(
+                                    'auth.login.fill_all_fields'.tr(),
+                                  );
                                 }
                               },
                       ),

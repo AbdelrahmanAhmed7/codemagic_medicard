@@ -186,6 +186,7 @@
     },
     "forgot_password": {
       "otp_title": "Verify OTP",
+      "otp_placeholder": "Enter OTP",
       "title": "Forgot Password",
       "description": "Don't worry ! It happens. Please enter your phone number and we will send the OTP to this phone number.",
       "phone_number": "Phone Number",
