@@ -191,26 +191,29 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
           orElse: () => false,
         );
         final successData = state.maybeWhen(
-          success: (homeInfo, personalInfo, sliderInfo) =>
-              (homeInfo: homeInfo, personalInfo: personalInfo, sliderInfo: sliderInfo),
+          success: (homeInfo, personalInfo, sliderInfo) => (
+            homeInfo: homeInfo,
+            personalInfo: personalInfo,
+            sliderInfo: sliderInfo,
+          ),
           orElse: () => null,
         );
 
         return Scaffold(
           backgroundColor: const Color(0xFFF0F4F9),
-          body: Stack(
-            children: [
-              // ── Blue arc — always visible ──────────────────────────────
-              _buildTopDecoration(),
-              // ── Content ────────────────────────────────────────────────
-              SafeArea(
-                child: successData != null
-                    ? _buildScrollableContent(
-                        successData.homeInfo.data!,
-                        successData.personalInfo?.data,
-                        successData.sliderInfo?.data ?? [],
-                      )
-                    : Column(
+          body: successData != null
+              ? _buildScrollableContent(
+                  successData.homeInfo.data!,
+                  successData.personalInfo?.data,
+                  successData.sliderInfo?.data ?? [],
+                )
+              : Stack(
+                  children: [
+                    // ── Blue arc — always visible ──────────────────────────────
+                    _buildTopDecoration(),
+                    // ── Content ────────────────────────────────────────────────
+                    SafeArea(
+                      child: Column(
                         children: [
                           _buildHeader(),
                           Expanded(
@@ -224,9 +227,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
                           ),
                         ],
                       ),
-              ),
-            ],
-          ),
+                    ),
+                  ],
+                ),
         );
       },
     );
@@ -309,7 +312,9 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
     // Summer offer runs from 2027-05-10 to 2027-10-30 only.
     final now = DateTime.now();
     if (now.isBefore(DateTime(2027, 5, 10)) ||
-        now.isAfter(DateTime(2027, 10, 30))) { return; }
+        now.isAfter(DateTime(2027, 10, 30))) {
+      return;
+    }
     if (_hasShownSummerPopupThisSession || !mounted) return;
     _hasShownSummerPopupThisSession = true;
 
@@ -540,9 +545,8 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
 
   // ─── Body ─────────────────────────────────────────────────────────────────
 
-  // Scrollable content shown only when data is available.
-  // The blue arc and header live OUTSIDE this widget (in the Scaffold Stack)
-  // so they never flicker between loading and success states.
+  // Scrollable content shown only when data is available. The blue arc is
+  // painted inside this scroll view so it moves with the rest of the page.
   Widget _buildScrollableContent(
     CardHomeInfoDataModel homeData,
     CardPersonalInfoDataModel? personalData,
@@ -550,107 +554,116 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
   ) {
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Header + welcome text on top of the arc (arc is in parent Stack).
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${'home.hello'.tr()} ${homeData.firstName} 👋',
-                      style: TextStyle(
-                        fontSize: 13.sp,
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    SizedBox(height: 22.h),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.w),
-                child: GestureDetector(
-                  onTap: () {
-                    if (_isGuest) {
-                      context.push('/medicard');
-                      return;
-                    }
-                    if (personalData != null) {
-                      _openMyCard(personalData);
-                    }
-                  },
-                  child: _buildMediCard(homeData),
-                ),
-              ),
-            ],
-          ),
-
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: 30.h + MediaQuery.of(context).padding.bottom,
-            ),
+          const Positioned.fill(child: ColoredBox(color: Color(0xFFF0F4F9))),
+          Positioned(top: 0, left: 0, right: 0, child: _buildTopDecoration()),
+          SafeArea(
+            bottom: false,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (sliderData.isNotEmpty) ...[
-                  SizedBox(height: 30.h),
-                  TopProvidersSlider(
-                    providers: sliderData,
-                    onProviderTap: (name) {
-                      final provider = sliderData.firstWhere(
-                        (p) => p.name == name,
-                      );
-                      _openProviderDetails(provider);
-                    },
-                  ),
-                ],
-                SizedBox(height: 8.h),
+                // Header + welcome text on top of the arc (arc is in parent Stack).
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${'home.hello'.tr()} ${homeData.firstName} 👋',
+                            style: TextStyle(
+                              fontSize: 13.sp,
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          SizedBox(height: 22.h),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_isGuest) {
+                            context.push('/medicard');
+                            return;
+                          }
+                          if (personalData != null) {
+                            _openMyCard(personalData);
+                          }
+                        },
+                        child: _buildMediCard(homeData),
+                      ),
+                    ),
+                  ],
+                ),
+
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: Row(
+                  padding: EdgeInsets.only(
+                    bottom: 30.h + MediaQuery.of(context).padding.bottom,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 4.w,
-                        height: 20.h,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E3A8A),
-                          borderRadius: BorderRadius.circular(4.r),
+                      if (sliderData.isNotEmpty) ...[
+                        SizedBox(height: 30.h),
+                        TopProvidersSlider(
+                          providers: sliderData,
+                          onProviderTap: (name) {
+                            final provider = sliderData.firstWhere(
+                              (p) => p.name == name,
+                            );
+                            _openProviderDetails(provider);
+                          },
+                        ),
+                      ],
+                      SizedBox(height: 8.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 4.w,
+                              height: 20.h,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E3A8A),
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                            ),
+                            SizedBox(width: 10.w),
+                            Text(
+                              'policy_screen.services'.tr(),
+                              style: TextStyle(
+                                fontSize: 17.sp,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1A1F36),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(width: 10.w),
-                      Text(
-                        'policy_screen.services'.tr(),
-                        style: TextStyle(
-                          fontSize: 17.sp,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1A1F36),
+                      SizedBox(height: 4.h),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.w),
+                        child: _buildQuickActions(personalData),
+                      ),
+                      Center(
+                        child: Image.asset(
+                          AppAssets.khusm,
+                          width: 200.w,
+                          height: 100.h,
+                          fit: BoxFit.contain,
                         ),
                       ),
+                      SizedBox(height: 24.h),
                     ],
                   ),
                 ),
-                SizedBox(height: 4.h),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w),
-                  child: _buildQuickActions(personalData),
-                ),
-                Center(
-                  child: Image.asset(
-                    AppAssets.khusm,
-                    width: 200.w,
-                    height: 100.h,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-                SizedBox(height: 24.h),
               ],
             ),
           ),
