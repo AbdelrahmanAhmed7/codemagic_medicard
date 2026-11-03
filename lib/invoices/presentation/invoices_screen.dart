@@ -50,34 +50,50 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     )).trim();
   }
 
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/medicard-home');
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xFFF3F6FA),
-    appBar: AppBar(
-      title: Text('invoice.new_request'.tr()),
-      backgroundColor: Colors.white,
-      foregroundColor: const Color(0xFF17324D),
-      surfaceTintColor: Colors.transparent,
-    ),
-    body: FutureBuilder<String>(
-      future: _cardNoFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final cardNo = snapshot.data ?? '';
-        if (cardNo.isEmpty) {
-          return _LoginRequired(onLogin: () => context.push('/medicard'));
-        }
-        return InvoiceCreateForm(
-          key: ValueKey(widget.initialProviderId),
-          cardNo: cardNo,
-          repository: _repository,
-          initialProviderId: widget.initialProviderId,
-          initialProviderName: widget.initialProviderName,
-          runTutorial: widget.runTutorial,
-        );
-      },
+    body: SafeArea(
+      child: Column(
+        children: [
+          _IntegratedPageHeader(
+            title: 'invoice.new_request'.tr(),
+            onBack: _goBack,
+          ),
+          Expanded(
+            child: FutureBuilder<String>(
+              future: _cardNoFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final cardNo = snapshot.data ?? '';
+                if (cardNo.isEmpty) {
+                  return _LoginRequired(
+                    onLogin: () => context.push('/medicard'),
+                  );
+                }
+                return InvoiceCreateForm(
+                  key: ValueKey(widget.initialProviderId),
+                  cardNo: cardNo,
+                  repository: _repository,
+                  initialProviderId: widget.initialProviderId,
+                  initialProviderName: widget.initialProviderName,
+                  runTutorial: widget.runTutorial,
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -126,26 +142,84 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
     },
     child: Scaffold(
       backgroundColor: const Color(0xFFF3F6FA),
-      appBar: AppBar(
-        title: Text('invoice.my_invoices'.tr()),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF17324D),
-        surfaceTintColor: Colors.transparent,
-        leading: BackButton(onPressed: _goBack),
+      body: SafeArea(
+        child: FutureBuilder<String>(
+          future: _cardNoFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return Column(
+                children: [
+                  _IntegratedPageHeader(
+                    title: 'invoice.my_invoices'.tr(),
+                    onBack: _goBack,
+                  ),
+                  const Expanded(
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              );
+            }
+            final cardNo = snapshot.data ?? '';
+            if (cardNo.isEmpty) {
+              return Column(
+                children: [
+                  _IntegratedPageHeader(
+                    title: 'invoice.my_invoices'.tr(),
+                    onBack: _goBack,
+                  ),
+                  Expanded(
+                    child: _LoginRequired(
+                      onLogin: () => context.push('/medicard'),
+                    ),
+                  ),
+                ],
+              );
+            }
+            return _InvoiceListTab(
+              cardNo: cardNo,
+              repository: _repository,
+              onBack: _goBack,
+            );
+          },
+        ),
       ),
-      body: FutureBuilder<String>(
-        future: _cardNoFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final cardNo = snapshot.data ?? '';
-          if (cardNo.isEmpty) {
-            return _LoginRequired(onLogin: () => context.push('/medicard'));
-          }
-          return _InvoiceListTab(cardNo: cardNo, repository: _repository);
-        },
-      ),
+    ),
+  );
+}
+
+class _IntegratedPageHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _IntegratedPageHeader({required this.title, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.fromLTRB(12.w, 8.h, 16.w, 6.h),
+    child: Row(
+      children: [
+        Material(
+          color: Colors.white,
+          shape: const CircleBorder(),
+          child: IconButton(
+            onPressed: onBack,
+            tooltip: 'common.back'.tr(),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            color: const Color(0xFF17324D),
+          ),
+        ),
+        SizedBox(width: 12.w),
+        Expanded(
+          child: Text(
+            title,
+            style: TextStyle(
+              color: const Color(0xFF17324D),
+              fontSize: 20.sp,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -187,8 +261,13 @@ class _LoginRequired extends StatelessWidget {
 class _InvoiceListTab extends StatefulWidget {
   final String cardNo;
   final InvoiceRepository repository;
+  final VoidCallback onBack;
 
-  const _InvoiceListTab({required this.cardNo, required this.repository});
+  const _InvoiceListTab({
+    required this.cardNo,
+    required this.repository,
+    required this.onBack,
+  });
 
   @override
   State<_InvoiceListTab> createState() => _InvoiceListTabState();
@@ -285,6 +364,7 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
   Future<void> _showCancelDialog(InvoiceRecord invoice) async {
     final reasonController = TextEditingController();
     var isSubmitting = false;
+    String? reasonError;
 
     final message = await showDialog<String>(
       context: context,
@@ -298,9 +378,15 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
             minLines: 3,
             maxLines: 5,
             autofocus: true,
+            onChanged: (_) {
+              if (reasonError != null) {
+                setDialogState(() => reasonError = null);
+              }
+            },
             decoration: InputDecoration(
               labelText: 'invoice.cancel_reason'.tr(),
               hintText: 'invoice.cancel_reason_hint'.tr(),
+              errorText: reasonError,
               border: const OutlineInputBorder(),
             ),
           ),
@@ -318,6 +404,14 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
               onPressed: isSubmitting
                   ? null
                   : () async {
+                      final reason = reasonController.text.trim();
+                      if (reason.isEmpty) {
+                        setDialogState(
+                          () => reasonError = 'invoice.cancel_reason_required'
+                              .tr(),
+                        );
+                        return;
+                      }
                       setDialogState(() => isSubmitting = true);
                       try {
                         final backendMessage = await widget.repository
@@ -325,7 +419,7 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
                               lang: _lang,
                               cardNo: widget.cardNo,
                               invoiceId: invoice.id,
-                              reason: reasonController.text.trim(),
+                              reason: reason,
                             );
                         if (dialogContext.mounted) {
                           Navigator.of(dialogContext).pop(backendMessage);
@@ -358,118 +452,78 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsets.fromLTRB(20.w, 20.h, 20.w, 12.h),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 52.w,
-                      height: 52.w,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5F4F1),
-                        borderRadius: BorderRadius.circular(17.r),
-                      ),
-                      child: Icon(
-                        Icons.receipt_long_rounded,
-                        color: const Color(0xFF0F766E),
-                        size: 26.sp,
-                      ),
-                    ),
-                    SizedBox(width: 14.w),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'invoice.history_description'.tr(),
-                            style: TextStyle(
-                              color: const Color(0xFF17324D),
-                              fontSize: 15.sp,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'invoice.history_hint'.tr(),
-                            style: TextStyle(
-                              color: const Color(0xFF64748B),
-                              fontSize: 12.sp,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(child: _buildList(context)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: _buildList(context),
+    ),
+  );
 
   Widget _buildList(BuildContext context) {
-    if (_isInitialLoad && _isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_invoices.isEmpty && _error != null) {
-      return _ErrorState(message: 'invoice.load_failed'.tr(), onRetry: reload);
-    }
-    if (_invoices.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: reload,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            SizedBox(height: 48.h),
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 60.sp,
-              color: const Color(0xFF98A4B5),
-            ),
-            SizedBox(height: 14.h),
-            Center(
-              child: Text(
-                'invoice.empty'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black54),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Center(
-              child: FilledButton.icon(
-                onPressed: () => context.push('/medicard-invoices'),
-                icon: const Icon(Icons.add_rounded),
-                label: Text('invoice.new_request'.tr()),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F766E),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: reload,
       child: ListView.builder(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(16.w),
-        itemCount: _invoices.length + (_hasMore || _error != null ? 1 : 0),
+        padding: EdgeInsets.only(
+          bottom: 16.h + MediaQuery.of(context).padding.bottom,
+        ),
+        itemCount:
+            1 +
+            (_invoices.isEmpty
+                ? 1
+                : _invoices.length + (_hasMore || _error != null ? 1 : 0)),
         itemBuilder: (context, index) {
-          if (index >= _invoices.length) {
+          if (index == 0) {
+            return _IntegratedPageHeader(
+              title: 'invoice.my_invoices'.tr(),
+              onBack: widget.onBack,
+            );
+          }
+          final invoiceIndex = index - 1;
+          if (_invoices.isEmpty) {
+            if (_isInitialLoad && _isLoading) {
+              return Padding(
+                padding: EdgeInsets.only(top: 72.h),
+                child: const Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (_error != null) {
+              return _ErrorState(
+                message: 'invoice.load_failed'.tr(),
+                onRetry: reload,
+              );
+            }
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20.w, 42.h, 20.w, 20.h),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 60.sp,
+                    color: const Color(0xFF98A4B5),
+                  ),
+                  SizedBox(height: 14.h),
+                  Text(
+                    'invoice.empty'.tr(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14.sp, color: Colors.black54),
+                  ),
+                  SizedBox(height: 16.h),
+                  FilledButton.icon(
+                    onPressed: () => context.push('/medicard-invoices'),
+                    icon: const Icon(Icons.add_rounded),
+                    label: Text('invoice.new_request'.tr()),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F766E),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (invoiceIndex >= _invoices.length) {
             if (_error != null) {
               return Center(
                 child: TextButton.icon(
@@ -492,12 +546,15 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
               ),
             );
           }
-          final invoice = _invoices[index];
-          return _InvoiceCard(
-            invoice: invoice,
-            onCancel: invoice.isPending
-                ? () => _showCancelDialog(invoice)
-                : null,
+          final invoice = _invoices[invoiceIndex];
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: _InvoiceCard(
+              invoice: invoice,
+              onCancel: invoice.isPending
+                  ? () => _showCancelDialog(invoice)
+                  : null,
+            ),
           );
         },
       ),
@@ -545,33 +602,33 @@ class _InvoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.only(bottom: 14.h),
+    margin: EdgeInsets.only(bottom: 10.h),
     color: Colors.white,
     surfaceTintColor: Colors.transparent,
-    elevation: 1.5,
-    shadowColor: const Color(0xFF17324D).withValues(alpha: 0.07),
+    elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(20.r),
+      borderRadius: BorderRadius.circular(16.r),
       side: const BorderSide(color: Color(0xFFE8EDF2)),
     ),
     child: Padding(
-      padding: EdgeInsets.all(16.w),
+      padding: EdgeInsets.all(13.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(14.r),
+                borderRadius: BorderRadius.circular(10.r),
                 child: Container(
-                  width: 52.w,
-                  height: 52.w,
+                  width: 42.w,
+                  height: 42.w,
                   color: const Color(0xFFF0F5F6),
                   child: invoice.providerLogo.isEmpty
                       ? Icon(
                           Icons.local_hospital_outlined,
                           color: const Color(0xFF0F766E),
-                          size: 25.sp,
+                          size: 21.sp,
                         )
                       : CachedNetworkImage(
                           imageUrl: invoice.providerLogo,
@@ -579,35 +636,44 @@ class _InvoiceCard extends StatelessWidget {
                           errorWidget: (_, _, _) => Icon(
                             Icons.local_hospital_outlined,
                             color: const Color(0xFF0F766E),
-                            size: 25.sp,
+                            size: 21.sp,
                           ),
                         ),
                 ),
               ),
-              SizedBox(width: 13.w),
+              SizedBox(width: 10.w),
               Expanded(
-                child: Text(
-                  invoice.providerName,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15.sp,
-                    height: 1.25,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF17324D),
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      invoice.providerName,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14.sp,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF17324D),
+                      ),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      'invoice.request_number'.tr(
+                        args: [invoice.id.toString()],
+                      ),
+                      style: TextStyle(
+                        fontSize: 10.5.sp,
+                        color: const Color(0xFF64748B),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-          SizedBox(height: 14.h),
-          Wrap(
-            spacing: 8.w,
-            runSpacing: 8.h,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
+              SizedBox(width: 8.w),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 11.w, vertical: 7.h),
+                padding: EdgeInsets.symmetric(horizontal: 9.w, vertical: 5.h),
                 decoration: BoxDecoration(
                   color: _statusColor.withValues(alpha: 0.09),
                   borderRadius: BorderRadius.circular(30.r),
@@ -615,57 +681,43 @@ class _InvoiceCard extends StatelessWidget {
                 child: Text(
                   _statusLabel,
                   style: TextStyle(
-                    fontSize: 12.sp,
+                    fontSize: 10.5.sp,
                     color: _statusColor,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              Text(
-                'invoice.request_number'.tr(args: [invoice.id.toString()]),
-                style: TextStyle(
-                  fontSize: 12.sp,
-                  color: const Color(0xFF64748B),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ],
           ),
-          if (invoice.branchName.trim().isNotEmpty ||
-              invoice.address.trim().isNotEmpty) ...[
-            SizedBox(height: 12.h),
+          if (invoice.branchName.trim().isNotEmpty) ...[
+            SizedBox(height: 11.h),
+            _InvoiceDetail(
+              icon: Icons.storefront_outlined,
+              title: 'invoice.branch'.tr(),
+              value: invoice.branchName.trim(),
+            ),
+          ],
+          if (invoice.address.trim().isNotEmpty) ...[
+            SizedBox(height: 7.h),
             _InvoiceDetail(
               icon: Icons.location_on_outlined,
-              label: invoice.branchName.trim(),
+              title: 'invoice.address'.tr(),
               value: invoice.address.trim(),
             ),
           ],
-          if (invoice.notes.isNotEmpty) ...[
-            SizedBox(height: 12.h),
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7F9FB),
-                borderRadius: BorderRadius.circular(13.r),
-              ),
-              child: Text(
-                invoice.notes,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13.sp,
-                  height: 1.4,
-                  color: const Color(0xFF475569),
-                ),
-              ),
+          if (invoice.notes.trim().isNotEmpty) ...[
+            SizedBox(height: 7.h),
+            _InvoiceDetail(
+              icon: Icons.medical_services_outlined,
+              title: 'invoice.requested_service'.tr(),
+              value: invoice.notes.trim(),
             ),
           ],
           if (invoice.cancelReason.trim().isNotEmpty) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: 7.h),
             _InvoiceDetail(
-              icon: Icons.info_outline_rounded,
-              label: 'invoice.cancel_reason'.tr(),
+              icon: Icons.report_gmailerrorred_rounded,
+              title: 'invoice.cancel_reason'.tr(),
               value: invoice.cancelReason.trim(),
               isDestructive: true,
             ),
@@ -673,12 +725,12 @@ class _InvoiceCard extends StatelessWidget {
           if (invoice.createdAt != null ||
               invoice.lineCount > 0 ||
               invoice.totalAmount > 0) ...[
-            SizedBox(height: 14.h),
+            SizedBox(height: 11.h),
             Container(height: 1, color: const Color(0xFFF0F3F6)),
-            SizedBox(height: 12.h),
+            SizedBox(height: 9.h),
             Wrap(
               spacing: 12.w,
-              runSpacing: 8.h,
+              runSpacing: 6.h,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 if (invoice.createdAt != null)
@@ -696,76 +748,57 @@ class _InvoiceCard extends StatelessWidget {
                     ),
                   ),
                 if (invoice.totalAmount > 0)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 7.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF6F3),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Text(
-                      '${NumberFormat.decimalPattern(context.locale.languageCode).format(invoice.totalAmount)} ${'common.egp'.tr()}',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F766E),
-                      ),
-                    ),
+                  _InvoiceMetadata(
+                    icon: Icons.payments_outlined,
+                    label:
+                        '${NumberFormat.decimalPattern(context.locale.languageCode).format(invoice.totalAmount)} ${'common.egp'.tr()}',
+                    color: const Color(0xFF0F766E),
+                    emphasize: true,
                   ),
               ],
             ),
           ],
-          // ── Download PDF button ──────────────────────────────────────────
-          if (invoice.invoicePdfUrl.isNotEmpty) ...[
-            SizedBox(height: 12.h),
+          if (invoice.invoicePdfUrl.isNotEmpty || onCancel != null) ...[
+            SizedBox(height: 10.h),
             Container(height: 1, color: const Color(0xFFF0F3F6)),
-            SizedBox(height: 10.h),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    UrlLauncherService().launchURL(invoice.invoicePdfUrl),
-                icon: Icon(
-                  Icons.download_rounded,
-                  size: 18.sp,
-                  color: const Color(0xFF0F766E),
-                ),
-                label: Text(
-                  'invoice.download_pdf'.tr(),
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0F766E),
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF0F766E)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                ),
-              ),
-            ),
-          ],
-          if (onCancel != null) ...[
-            SizedBox(height: 10.h),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onCancel,
-                icon: Icon(Icons.cancel_outlined, size: 18.sp),
-                label: Text('invoice.cancel_invoice'.tr()),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFB91C1C),
-                  side: const BorderSide(color: Color(0xFFB91C1C)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 10.h),
-                ),
+            SizedBox(height: 4.h),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: Wrap(
+                spacing: 4.w,
+                runSpacing: 2.h,
+                alignment: WrapAlignment.end,
+                children: [
+                  if (invoice.invoicePdfUrl.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () =>
+                          UrlLauncherService().launchURL(invoice.invoicePdfUrl),
+                      icon: Icon(Icons.download_rounded, size: 17.sp),
+                      label: Text('invoice.download_pdf'.tr()),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0F766E),
+                        visualDensity: VisualDensity.compact,
+                        textStyle: TextStyle(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  if (onCancel != null)
+                    TextButton.icon(
+                      onPressed: onCancel,
+                      icon: Icon(Icons.cancel_outlined, size: 17.sp),
+                      label: Text('invoice.cancel_invoice'.tr()),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFB91C1C),
+                        visualDensity: VisualDensity.compact,
+                        textStyle: TextStyle(
+                          fontSize: 11.5.sp,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
@@ -777,13 +810,13 @@ class _InvoiceCard extends StatelessWidget {
 
 class _InvoiceDetail extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String title;
   final String value;
   final bool isDestructive;
 
   const _InvoiceDetail({
     required this.icon,
-    required this.label,
+    required this.title,
     required this.value,
     this.isDestructive = false,
   });
@@ -793,33 +826,35 @@ class _InvoiceDetail extends StatelessWidget {
     final color = isDestructive
         ? const Color(0xFFB91C1C)
         : const Color(0xFF475569);
-    final visibleText = [
-      if (label.isNotEmpty) label,
-      if (value.isNotEmpty && value != label) value,
-    ].join(' · ');
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: isDestructive
-            ? const Color(0xFFFEF2F2)
-            : const Color(0xFFF7F9FB),
-        borderRadius: BorderRadius.circular(13.r),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 17.sp, color: color),
-          SizedBox(width: 7.w),
-          Expanded(
-            child: Text(
-              visibleText,
-              style: TextStyle(fontSize: 12.sp, height: 1.4, color: color),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(top: 2.h),
+          child: Icon(icon, size: 16.sp, color: color.withValues(alpha: 0.82)),
+        ),
+        SizedBox(width: 8.w),
+        Expanded(
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$title:  ',
+                  style: TextStyle(
+                    color: color.withValues(alpha: 0.72),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                TextSpan(
+                  text: value,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w700),
+                ),
+              ],
             ),
+            style: TextStyle(fontSize: 11.5.sp, height: 1.35),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -827,21 +862,28 @@ class _InvoiceDetail extends StatelessWidget {
 class _InvoiceMetadata extends StatelessWidget {
   final IconData icon;
   final String label;
+  final Color color;
+  final bool emphasize;
 
-  const _InvoiceMetadata({required this.icon, required this.label});
+  const _InvoiceMetadata({
+    required this.icon,
+    required this.label,
+    this.color = const Color(0xFF64748B),
+    this.emphasize = false,
+  });
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Icon(icon, size: 14.sp, color: const Color(0xFF94A3B8)),
+      Icon(icon, size: 14.sp, color: color.withValues(alpha: 0.75)),
       SizedBox(width: 5.w),
       Text(
         label,
         style: TextStyle(
           fontSize: 11.sp,
-          color: const Color(0xFF64748B),
-          fontWeight: FontWeight.w600,
+          color: color,
+          fontWeight: emphasize ? FontWeight.w800 : FontWeight.w600,
         ),
       ),
     ],

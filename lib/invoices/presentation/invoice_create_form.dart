@@ -487,81 +487,52 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
           ),
           children: [
             Container(
-              padding: EdgeInsets.all(18.w),
+              padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 12.h),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0F766E), Color(0xFF0E7490)],
-                  begin: AlignmentDirectional.topStart,
-                  end: AlignmentDirectional.bottomEnd,
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: const Color(0xFFE4EAF0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+                    blurRadius: 18.r,
+                    offset: Offset(0, 6.h),
+                  ),
+                ],
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 52.w,
-                    height: 52.w,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(16.r),
-                    ),
-                    child: Icon(
-                      Icons.receipt_long_rounded,
-                      color: Colors.white,
-                      size: 26.sp,
+                  Expanded(
+                    child: _ProgressStep(
+                      number: 1,
+                      label: 'invoice.provider'.tr(),
+                      complete: _provider != null,
+                      active: _provider == null,
                     ),
                   ),
-                  SizedBox(width: 14.w),
+                  _ProgressConnector(complete: _provider != null),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'invoice.create_title'.tr(),
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          'invoice.open_description'.tr(),
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            height: 1.4,
-                            color: Colors.white.withValues(alpha: 0.85),
-                          ),
-                        ),
-                      ],
+                    child: _ProgressStep(
+                      number: 2,
+                      label: 'invoice.branch'.tr(),
+                      complete: _branch != null,
+                      active: _provider != null && _branch == null,
+                    ),
+                  ),
+                  _ProgressConnector(complete: _branch != null),
+                  Expanded(
+                    child: _ProgressStep(
+                      number: 3,
+                      label: 'invoice.request_details'.tr(),
+                      complete:
+                          _notesController.text.trim().isNotEmpty ||
+                          _attachments.isNotEmpty,
+                      active: _branch != null,
                     ),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 18.h),
-            Wrap(
-              spacing: 8.w,
-              runSpacing: 8.h,
-              children: [
-                _ProgressStep(
-                  number: 1,
-                  label: 'invoice.provider'.tr(),
-                  complete: _provider != null,
-                ),
-                _ProgressStep(
-                  number: 2,
-                  label: 'invoice.branch'.tr(),
-                  complete: _branch != null,
-                ),
-                _ProgressStep(
-                  number: 3,
-                  label: 'invoice.request_details'.tr(),
-                  complete:
-                      _notesController.text.trim().isNotEmpty ||
-                      _attachments.isNotEmpty,
-                ),
-              ],
             ),
             SizedBox(height: 18.h),
             _FormSection(
@@ -760,46 +731,14 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                 ],
               ),
             ),
-            SizedBox(height: 18.h),
-            SizedBox(
-              height: 54.h,
-              child: FilledButton(
-                onPressed: canSubmit ? _submit : null,
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F766E),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFCBD5E1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.r),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (_isSubmitting)
-                      SizedBox(
-                        width: 18.w,
-                        height: 18.w,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2.2,
-                          color: Colors.white,
-                        ),
-                      )
-                    else
-                      const Icon(Icons.send_rounded, size: 19),
-                    SizedBox(width: 9.w),
-                    Text(
-                      _isSubmitting
-                          ? 'common.loading'.tr()
-                          : 'invoice.submit_request'.tr(),
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            SizedBox(height: 20.h),
+            _PremiumSubmitButton(
+              enabled: canSubmit,
+              loading: _isSubmitting,
+              onPressed: _submit,
+              label: _isSubmitting
+                  ? 'common.loading'.tr()
+                  : 'invoice.submit_request'.tr(),
             ),
           ],
         ),
@@ -808,36 +747,175 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
   }
 }
 
+class _PremiumSubmitButton extends StatelessWidget {
+  final bool enabled;
+  final bool loading;
+  final VoidCallback onPressed;
+  final String label;
+
+  const _PremiumSubmitButton({
+    required this.enabled,
+    required this.loading,
+    required this.onPressed,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) => AnimatedOpacity(
+    duration: const Duration(milliseconds: 180),
+    opacity: enabled || loading ? 1 : 0.58,
+    child: Container(
+      height: 56.h,
+      decoration: BoxDecoration(
+        gradient: enabled || loading
+            ? const LinearGradient(
+                colors: [Color(0xFF0F766E), Color(0xFF0E7490)],
+                begin: AlignmentDirectional.centerStart,
+                end: AlignmentDirectional.centerEnd,
+              )
+            : const LinearGradient(
+                colors: [Color(0xFFB7C3CE), Color(0xFF9EACB9)],
+              ),
+        borderRadius: BorderRadius.circular(17.r),
+        boxShadow: enabled
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF0F766E).withValues(alpha: 0.24),
+                  blurRadius: 18.r,
+                  offset: Offset(0, 8.h),
+                ),
+              ]
+            : null,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: enabled ? onPressed : null,
+          borderRadius: BorderRadius.circular(17.r),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (loading)
+                SizedBox(
+                  width: 19.w,
+                  height: 19.w,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2.2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                Icon(Icons.send_rounded, size: 19.sp, color: Colors.white),
+              SizedBox(width: 9.w),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _ProgressStep extends StatelessWidget {
   final int number;
   final String label;
   final bool complete;
+  final bool active;
 
   const _ProgressStep({
     required this.number,
     required this.label,
     required this.complete,
+    required this.active,
   });
 
   @override
-  Widget build(BuildContext context) => Chip(
-    backgroundColor: complete ? const Color(0xFFCCFBF1) : Colors.white,
-    side: BorderSide(
-      color: complete ? const Color(0xFF99F6E4) : const Color(0xFFE2E8F0),
-    ),
-    avatar: complete
-        ? const Icon(
-            Icons.check_circle_rounded,
-            color: Color(0xFF0F766E),
-            size: 18,
-          )
-        : CircleAvatar(
-            backgroundColor: const Color(0xFFF1F5F9),
-            child: Text('$number', style: const TextStyle(fontSize: 11)),
+  Widget build(BuildContext context) => Column(
+    children: [
+      AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        width: 32.w,
+        height: 32.w,
+        decoration: BoxDecoration(
+          color: complete
+              ? const Color(0xFF0F766E)
+              : active
+              ? const Color(0xFFE5F4F1)
+              : const Color(0xFFF1F5F9),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: complete || active
+                ? const Color(0xFF0F766E)
+                : const Color(0xFFDCE4EC),
+            width: active && !complete ? 1.5 : 1,
           ),
-    label: Text(
-      label,
-      style: TextStyle(fontSize: 11.sp, color: const Color(0xFF334155)),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0F766E).withValues(alpha: 0.14),
+                    blurRadius: 9.r,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: complete
+              ? Icon(Icons.check_rounded, size: 17.sp, color: Colors.white)
+              : Text(
+                  '$number',
+                  style: TextStyle(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w800,
+                    color: active
+                        ? const Color(0xFF0F766E)
+                        : const Color(0xFF94A3B8),
+                  ),
+                ),
+        ),
+      ),
+      SizedBox(height: 7.h),
+      Text(
+        label,
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 10.sp,
+          height: 1.25,
+          fontWeight: complete || active ? FontWeight.w700 : FontWeight.w600,
+          color: complete || active
+              ? const Color(0xFF17324D)
+              : const Color(0xFF94A3B8),
+        ),
+      ),
+    ],
+  );
+}
+
+class _ProgressConnector extends StatelessWidget {
+  final bool complete;
+
+  const _ProgressConnector({required this.complete});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 28.w,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      height: 2.h,
+      margin: EdgeInsets.only(top: 15.h),
+      decoration: BoxDecoration(
+        color: complete ? const Color(0xFF0F766E) : const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(2.r),
+      ),
     ),
   );
 }
@@ -855,16 +933,16 @@ class _FormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.all(16.w),
+    padding: EdgeInsets.all(18.w),
     decoration: BoxDecoration(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(18.r),
-      border: Border.all(color: const Color(0xFFE7EDF3)),
+      borderRadius: BorderRadius.circular(22.r),
+      border: Border.all(color: const Color(0xFFE4EAF0)),
       boxShadow: [
         BoxShadow(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.035),
-          blurRadius: 16.r,
-          offset: Offset(0, 5.h),
+          color: const Color(0xFF0F172A).withValues(alpha: 0.045),
+          blurRadius: 22.r,
+          offset: Offset(0, 8.h),
         ),
       ],
     ),
@@ -874,13 +952,18 @@ class _FormSection extends StatelessWidget {
         Row(
           children: [
             Container(
-              width: 34.w,
-              height: 34.w,
+              width: 38.w,
+              height: 38.w,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5F3),
-                borderRadius: BorderRadius.circular(11.r),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE4F4F1), Color(0xFFF0F9F8)],
+                  begin: AlignmentDirectional.topStart,
+                  end: AlignmentDirectional.bottomEnd,
+                ),
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: const Color(0xFFCDE7E2)),
               ),
-              child: Icon(icon, size: 18.sp, color: const Color(0xFF0F766E)),
+              child: Icon(icon, size: 19.sp, color: const Color(0xFF0F766E)),
             ),
             SizedBox(width: 10.w),
             Expanded(
@@ -889,13 +972,13 @@ class _FormSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15.sp,
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
+                  color: const Color(0xFF17324D),
                 ),
               ),
             ),
           ],
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: 17.h),
         child,
       ],
     ),
@@ -914,27 +997,66 @@ class _AttachmentAction extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => OutlinedButton(
-    onPressed: onTap,
-    style: OutlinedButton.styleFrom(
-      foregroundColor: const Color(0xFF0F766E),
-      backgroundColor: const Color(0xFFF8FAFC),
-      side: const BorderSide(color: Color(0xFFDCE7E8)),
-      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13.r)),
-    ),
-    child: Column(
-      children: [
-        Icon(icon, size: 21.sp),
-        SizedBox(height: 5.h),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 11.sp, fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: Ink(
+      decoration: BoxDecoration(
+        color: onTap == null
+            ? const Color(0xFFF4F6F8)
+            : const Color(0xFFF5FBFA),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: onTap == null
+              ? const Color(0xFFE2E8F0)
+              : const Color(0xFFCDE7E2),
         ),
-      ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14.r),
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 11.h, horizontal: 10.w),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 30.w,
+                height: 30.w,
+                decoration: BoxDecoration(
+                  color: onTap == null
+                      ? const Color(0xFFE5E9ED)
+                      : const Color(0xFFE2F3F0),
+                  borderRadius: BorderRadius.circular(9.r),
+                ),
+                child: Icon(
+                  icon,
+                  size: 17.sp,
+                  color: onTap == null
+                      ? const Color(0xFF94A3B8)
+                      : const Color(0xFF0F766E),
+                ),
+              ),
+              SizedBox(width: 7.w),
+              Flexible(
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5.sp,
+                    height: 1.2,
+                    fontWeight: FontWeight.w700,
+                    color: onTap == null
+                        ? const Color(0xFF94A3B8)
+                        : const Color(0xFF0F766E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     ),
   );
 }
