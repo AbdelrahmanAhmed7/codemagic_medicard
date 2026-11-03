@@ -1,8 +1,10 @@
 import 'dart:ui' as ui;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../theming/app_colors.dart';
+import 'language_helper.dart';
 
 /// Reusable Egyptian phone number field with flag and +20 prefix
 class EgyptianPhoneField extends StatelessWidget {
@@ -22,7 +24,7 @@ class EgyptianPhoneField extends StatelessWidget {
     required this.phoneRequiredKey,
     required this.phoneInvalidKey,
     this.onChanged,
-    this.maxLength
+    this.maxLength,
   });
 
   /// Default validator for Egyptian phone numbers
@@ -30,8 +32,13 @@ class EgyptianPhoneField extends StatelessWidget {
     if (value == null || value.isEmpty) {
       return phoneRequiredKey.tr();
     }
+    final normalizedValue = LanguageHelper.convertArabicToEnglishNumerals(
+      value.trim(),
+    );
     // Remove leading 0 if user entered it for validation
-    String cleanValue = value.startsWith('0') ? value.substring(1) : value;
+    String cleanValue = normalizedValue.startsWith('0')
+        ? normalizedValue.substring(1)
+        : normalizedValue;
 
     // Reject if empty after removing 0
     if (cleanValue.isEmpty) {
@@ -78,13 +85,13 @@ class EgyptianPhoneField extends StatelessWidget {
                       border: Border.all(color: Colors.grey.shade300),
                       borderRadius: isRTL
                           ? BorderRadius.only(
-                        topRight: Radius.circular(8.r),
-                        bottomRight: Radius.circular(8.r),
-                      )
+                              topRight: Radius.circular(8.r),
+                              bottomRight: Radius.circular(8.r),
+                            )
                           : BorderRadius.only(
-                        topLeft: Radius.circular(8.r),
-                        bottomLeft: Radius.circular(8.r),
-                      ),
+                              topLeft: Radius.circular(8.r),
+                              bottomLeft: Radius.circular(8.r),
+                            ),
                     ),
                     child: Directionality(
                       textDirection: ui.TextDirection.ltr,
@@ -118,16 +125,16 @@ class EgyptianPhoneField extends StatelessWidget {
                           left: isRTL
                               ? BorderSide.none
                               : BorderSide(
-                            color: fieldState.hasError
-                                ? AppColors.errorClr
-                                : Colors.grey.shade300,
-                          ),
+                                  color: fieldState.hasError
+                                      ? AppColors.errorClr
+                                      : Colors.grey.shade300,
+                                ),
                           right: isRTL
                               ? BorderSide(
-                            color: fieldState.hasError
-                                ? AppColors.errorClr
-                                : Colors.grey.shade300,
-                          )
+                                  color: fieldState.hasError
+                                      ? AppColors.errorClr
+                                      : Colors.grey.shade300,
+                                )
                               : BorderSide.none,
                           bottom: BorderSide(
                             color: fieldState.hasError
@@ -137,18 +144,23 @@ class EgyptianPhoneField extends StatelessWidget {
                         ),
                         borderRadius: isRTL
                             ? BorderRadius.only(
-                          topLeft: Radius.circular(8.r),
-                          bottomLeft: Radius.circular(8.r),
-                        )
+                                topLeft: Radius.circular(8.r),
+                                bottomLeft: Radius.circular(8.r),
+                              )
                             : BorderRadius.only(
-                          topRight: Radius.circular(8.r),
-                          bottomRight: Radius.circular(8.r),
-                        ),
+                                topRight: Radius.circular(8.r),
+                                bottomRight: Radius.circular(8.r),
+                              ),
                       ),
                       child: TextField(
                         controller: controller,
                         maxLength: maxLength,
                         keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'[0-9٠-٩]'),
+                          ),
+                        ],
                         textDirection: ui.TextDirection.ltr,
                         style: TextStyle(fontSize: 14.sp),
                         onChanged: (value) {
@@ -161,7 +173,9 @@ class EgyptianPhoneField extends StatelessWidget {
                             horizontal: 12.w,
                             vertical: 12.h,
                           ),
-                          hintText: hintText ?? 'auth.signup.validation.phone_hint'.tr(),
+                          hintText:
+                              hintText ??
+                              'auth.signup.validation.phone_hint'.tr(),
                           hintStyle: TextStyle(
                             fontSize: 14.sp,
                             color: Colors.grey,

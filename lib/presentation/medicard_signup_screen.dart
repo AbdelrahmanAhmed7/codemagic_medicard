@@ -79,10 +79,8 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       listenWhen: (previous, current) => true,
       listener: (context, state) {
         state.when(
-          initial: () {
-          },
-          loading: () {
-          },
+          initial: () {},
+          loading: () {},
           success: (response) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
@@ -111,230 +109,318 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.backgroundClr,
-          appBar: AppBar(
-            backgroundColor: AppColors.backgroundClr,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.blackClr),
-              onPressed: () => context.go('/medicard'),
-            ),
-            title: Text('medicard_registration.title'.tr(), style: AppTextStyles.font16BlackMedium(context)),
-            centerTitle: true,
-          ),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(16.w, 20.h, 16.w, 20.h + MediaQuery.of(context).padding.bottom),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  MediCardCardVisual(
-                    cardNumber: _medicardNumberController.text,
-                    firstName: _firstNameController.text,
-                    lastName: _lastNameController.text,
-                    birthdate: _birthDateController.text,
-                    expireDate: DateFormat('yyyy-MM-dd').format(
-                      DateTime(DateTime.now().year + 1, DateTime.now().month, DateTime.now().day),
-                    ),
-                    profileImage: _pickedImage,
-                    onRemoveImage: () {
-                      setState(() {
-                        _pickedImage = null;
-                      });
-                    },
-                  ),
-              SizedBox(height: 32.h),
-              
-              // Card Information
-              _buildTextField(
-                label: 'medicard_registration.medicard_number'.tr(), 
-                hint: 'medicard_registration.medicard_number_hint'.tr(), 
-                icon: Icons.credit_card_rounded,
-                isRequired: true,
-                keyboardType: TextInputType.number,
-                controller: _medicardNumberController,
-                maxLength: 12,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(12),
-                ],
-                onChanged: (_) => setState(() {}),
-                customValidator: (value) {
-                  final text = value ?? '';
-                  if (text.isEmpty) {
-                    return 'medicard_registration.validation.field_required'.tr();
-                  }
-                  if (text.length != 12) {
-                    return 'medicard_registration.validation.card_length'.tr();
-                  }
-                  if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
-                    return 'medicard_registration.validation.card_numbers_only'.tr();
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 24.h),
-              
-              // Personal Information
-              _buildTextField(
-                label: 'medicard_registration.first_name'.tr(), 
-                hint: 'medicard_registration.first_name_hint'.tr(), 
-                isRequired: true,
-                controller: _firstNameController,
-                onChanged: (_) => setState(() {}),
-              ),
-              SizedBox(height: 16.h),
-              _buildTextField(
-                label: 'medicard_registration.last_name'.tr(), 
-                hint: 'medicard_registration.last_name_hint'.tr(), 
-                isRequired: true,
-                controller: _lastNameController,
-                onChanged: (_) => setState(() {}),
-              ),
-              SizedBox(height: 16.h),
-              _buildGenderDropdown(),
-              SizedBox(height: 16.h),
-              _buildBirthdatePicker(),
-              SizedBox(height: 24.h),
-              
-              // Contact Information
-              _buildPhoneField(),
-              SizedBox(height: 16.h),
-              _buildTextField(
-                label: 'medicard_registration.email'.tr(), 
-                hint: 'medicard_registration.email_hint'.tr(), 
-                keyboardType: TextInputType.emailAddress, 
-                isRequired: false,
-                controller: _emailController,
-              ),
-              SizedBox(height: 24.h),
-              
-              // Identity Documents (Optional)
-                  _buildTextField(
-                    label: 'medicard_registration.national_id'.tr(),
-                    hint: 'medicard_registration.national_id_hint'.tr(),
-                    icon: Icons.badge_outlined,
-                    keyboardType: TextInputType.number,
-                    isRequired: false,
-                    controller: _nationalIdController,
-                    maxLength: 14,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(14),
-                    ],
-                  ),
-              SizedBox(height: 16.h),
-              _buildTextField(
-                label: 'medicard_registration.passport_number'.tr(), 
-                hint: 'medicard_registration.passport_number_hint'.tr(), 
-                icon: Icons.flight_takeoff_rounded,
-                isRequired: false,
-                controller: _passportController,
-              ),
-              SizedBox(height: 24.h),
-              
-              // Security
-              _buildPasswordField(),
-              SizedBox(height: 16.h),
-              _buildConfirmPasswordField(),
-              SizedBox(height: 24.h),
-              
-              // Profile Photo (Optional)
-              _buildPhotoPicker(),
-
-              SizedBox(height: 16.h),
-              const LegalLinksRow(showAgreementHint: true),
-              SizedBox(height: 24.h),
-              AppButton(
-                text: 'medicard_registration.register_button'.tr(),
-                useGradient: true,
-                isLoading: isLoading,
-                gradient: LinearGradient(
-                  colors: [const Color(0xFF1E3A8A), const Color(0xFF1E3A8A).withValues(alpha: 0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                onPressed: isLoading ? null : () {
-                  // Unfocus any text fields
-                  FocusScope.of(context).unfocus();
-                  
-                  final isValid = _formKey.currentState!.validate();
-                  
-                  if (isValid) {
-                    // Format phone number (add 0 if not present) and convert numerals
-                    String rawPhone = _phoneController.text.trim();
-                    String formattedPhone = rawPhone.startsWith('0') ? rawPhone : '0$rawPhone';
-                    formattedPhone = LanguageHelper.convertArabicToEnglishNumerals(formattedPhone);
-
-                    final cardNo = LanguageHelper.convertArabicToEnglishNumerals(_medicardNumberController.text.trim());
-                    final password = LanguageHelper.convertArabicToEnglishNumerals(_passwordController.text.trim());
-                    final confirmPassword = LanguageHelper.convertArabicToEnglishNumerals(_confirmPasswordController.text.trim());
-                    final nationalId = _nationalIdController.text.isEmpty 
-                        ? null 
-                        : LanguageHelper.convertArabicToEnglishNumerals(_nationalIdController.text.trim());
-                    final birthdate = LanguageHelper.convertArabicToEnglishNumerals(_birthDateController.text.trim());
-                    final passportNumber = _passportController.text.isEmpty 
-                        ? null 
-                        : LanguageHelper.convertArabicToEnglishNumerals(_passportController.text.trim());
-
-                    final cubit = context.read<MedicardActivationCubit>();
-                    final lang = context.locale.languageCode;
-
-                    cubit.activateCard(
-                      cardNo: cardNo,
-                      phoneNumber: formattedPhone,
-                      password: password,
-                      confirmPassword: confirmPassword,
-                      firstName: _firstNameController.text.trim(),
-                      lastName: _lastNameController.text.trim(),
-                      nationalId: nationalId,
-                      birthdate: birthdate,
-                      passportNumber: passportNumber,
-                      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-                      isMale: _selectedGender == 'Male',
-                      profileImage: _pickedImage?.path,
-                      lang: lang,
-                    );
-                  } else {
-                    // Form is invalid - the fields will show their own errors. 
-                    // No global snackbar as per user request.
-                  }
-                },
-              ),
-              SizedBox(height: 24.h),
-
-              // Already activated? Login
-              Center(
-                child: Text.rich(
-                  TextSpan(
-                    text: 'medicard_registration.already_activated'.tr(),
-                    style: TextStyle(
-                      fontSize: 13.sp,
-                      color: Colors.grey[700],
-                    ),
-                    children: [
-                      TextSpan(
-                        text: 'medicard_registration.login'.tr(),
-                        style: TextStyle(
-                          color: const Color(0xFF233154),
-                          fontWeight: FontWeight.w600,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 20.h),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: AppColors.blackClr,
+                          ),
+                          tooltip: 'common.back'.tr(),
+                          onPressed: () => context.go('/medicard'),
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            context.push('/medicard-login');
-                          },
+                        Expanded(
+                          child: Text(
+                            'medicard_registration.title'.tr(),
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.font16BlackMedium(context),
+                          ),
+                        ),
+                        SizedBox(width: 48.w),
+                      ],
+                    ),
+                    SizedBox(height: 14.h),
+                    MediCardCardVisual(
+                      cardNumber: _medicardNumberController.text,
+                      firstName: _firstNameController.text,
+                      lastName: _lastNameController.text,
+                      birthdate: _birthDateController.text,
+                      expireDate: DateFormat('yyyy-MM-dd').format(
+                        DateTime(
+                          DateTime.now().year + 1,
+                          DateTime.now().month,
+                          DateTime.now().day,
+                        ),
                       ),
-                    ],
-                  ),
+                      profileImage: _pickedImage,
+                      onRemoveImage: () {
+                        setState(() {
+                          _pickedImage = null;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 32.h),
+
+                    // Card Information
+                    _buildTextField(
+                      label: 'medicard_registration.medicard_number'.tr(),
+                      hint: 'medicard_registration.medicard_number_hint'.tr(),
+                      icon: Icons.credit_card_rounded,
+                      isRequired: true,
+                      keyboardType: TextInputType.number,
+                      controller: _medicardNumberController,
+                      maxLength: 12,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                        LengthLimitingTextInputFormatter(12),
+                      ],
+                      onChanged: (_) => setState(() {}),
+                      customValidator: (value) {
+                        final text =
+                            LanguageHelper.convertArabicToEnglishNumerals(
+                              (value ?? '').trim(),
+                            );
+                        if (text.isEmpty) {
+                          return 'medicard_registration.validation.field_required'
+                              .tr();
+                        }
+                        if (text.length != 12) {
+                          return 'medicard_registration.validation.card_length'
+                              .tr();
+                        }
+                        if (!RegExp(r'^[0-9]+$').hasMatch(text)) {
+                          return 'medicard_registration.validation.card_numbers_only'
+                              .tr();
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Personal Information
+                    _buildTextField(
+                      label: 'medicard_registration.first_name'.tr(),
+                      hint: 'medicard_registration.first_name_hint'.tr(),
+                      isRequired: true,
+                      controller: _firstNameController,
+                      onChanged: (_) => setState(() {}),
+                      customValidator: _validateName,
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildTextField(
+                      label: 'medicard_registration.last_name'.tr(),
+                      hint: 'medicard_registration.last_name_hint'.tr(),
+                      isRequired: true,
+                      controller: _lastNameController,
+                      onChanged: (_) => setState(() {}),
+                      customValidator: _validateName,
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildGenderDropdown(),
+                    SizedBox(height: 16.h),
+                    _buildBirthdatePicker(),
+                    SizedBox(height: 24.h),
+
+                    // Contact Information
+                    _buildPhoneField(),
+                    SizedBox(height: 16.h),
+                    _buildTextField(
+                      label: 'medicard_registration.email'.tr(),
+                      hint: 'medicard_registration.email_hint'.tr(),
+                      keyboardType: TextInputType.emailAddress,
+                      isRequired: false,
+                      controller: _emailController,
+                      customValidator: _validateEmail,
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Identity Documents (Optional)
+                    _buildTextField(
+                      label: 'medicard_registration.national_id'.tr(),
+                      hint: 'medicard_registration.national_id_hint'.tr(),
+                      icon: Icons.badge_outlined,
+                      keyboardType: TextInputType.number,
+                      isRequired: false,
+                      controller: _nationalIdController,
+                      maxLength: 14,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                        LengthLimitingTextInputFormatter(14),
+                      ],
+                      customValidator: _validateNationalId,
+                    ),
+                    SizedBox(height: 16.h),
+                    _buildTextField(
+                      label: 'medicard_registration.passport_number'.tr(),
+                      hint: 'medicard_registration.passport_number_hint'.tr(),
+                      icon: Icons.flight_takeoff_rounded,
+                      isRequired: false,
+                      controller: _passportController,
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Security
+                    _buildPasswordField(),
+                    SizedBox(height: 16.h),
+                    _buildConfirmPasswordField(),
+                    SizedBox(height: 24.h),
+
+                    // Profile Photo (Optional)
+                    _buildPhotoPicker(),
+
+                    SizedBox(height: 16.h),
+                    const LegalLinksRow(showAgreementHint: true),
+                    SizedBox(height: 24.h),
+                    AppButton(
+                      text: 'medicard_registration.register_button'.tr(),
+                      useGradient: true,
+                      isLoading: isLoading,
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF1E3A8A),
+                          const Color(0xFF1E3A8A).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                              // Unfocus any text fields
+                              FocusScope.of(context).unfocus();
+
+                              final isValid = _formKey.currentState!.validate();
+
+                              if (isValid) {
+                                // Format phone number (add 0 if not present) and convert numerals
+                                String rawPhone = _phoneController.text.trim();
+                                String formattedPhone = rawPhone.startsWith('0')
+                                    ? rawPhone
+                                    : '0$rawPhone';
+                                formattedPhone =
+                                    LanguageHelper.convertArabicToEnglishNumerals(
+                                      formattedPhone,
+                                    );
+
+                                final cardNo =
+                                    LanguageHelper.convertArabicToEnglishNumerals(
+                                      _medicardNumberController.text.trim(),
+                                    );
+                                final password =
+                                    LanguageHelper.convertArabicToEnglishNumerals(
+                                      _passwordController.text.trim(),
+                                    );
+                                final confirmPassword =
+                                    LanguageHelper.convertArabicToEnglishNumerals(
+                                      _confirmPasswordController.text.trim(),
+                                    );
+                                final nationalId =
+                                    _nationalIdController.text.isEmpty
+                                    ? null
+                                    : LanguageHelper.convertArabicToEnglishNumerals(
+                                        _nationalIdController.text.trim(),
+                                      );
+                                final birthdate =
+                                    LanguageHelper.convertArabicToEnglishNumerals(
+                                      _birthDateController.text.trim(),
+                                    );
+                                final passportNumber =
+                                    _passportController.text.isEmpty
+                                    ? null
+                                    : LanguageHelper.convertArabicToEnglishNumerals(
+                                        _passportController.text.trim(),
+                                      );
+
+                                final cubit = context
+                                    .read<MedicardActivationCubit>();
+                                final lang = context.locale.languageCode;
+
+                                cubit.activateCard(
+                                  cardNo: cardNo,
+                                  phoneNumber: formattedPhone,
+                                  password: password,
+                                  confirmPassword: confirmPassword,
+                                  firstName: _firstNameController.text.trim(),
+                                  lastName: _lastNameController.text.trim(),
+                                  nationalId: nationalId,
+                                  birthdate: birthdate,
+                                  passportNumber: passportNumber,
+                                  email: _emailController.text.trim().isEmpty
+                                      ? null
+                                      : _emailController.text.trim(),
+                                  isMale: _selectedGender == 'Male',
+                                  profileImage: _pickedImage?.path,
+                                  lang: lang,
+                                );
+                              } else {
+                                // Form is invalid - the fields will show their own errors.
+                                // No global snackbar as per user request.
+                              }
+                            },
+                    ),
+                    SizedBox(height: 24.h),
+
+                    // Already activated? Login
+                    Center(
+                      child: Text.rich(
+                        TextSpan(
+                          text: 'medicard_registration.already_activated'.tr(),
+                          style: TextStyle(
+                            fontSize: 13.sp,
+                            color: Colors.grey[700],
+                          ),
+                          children: [
+                            TextSpan(
+                              text: 'medicard_registration.login'.tr(),
+                              style: TextStyle(
+                                color: const Color(0xFF233154),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  context.push('/medicard-login');
+                                },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
       },
     );
+  }
+
+  String? _validateName(String? value) {
+    if ((value ?? '').trim().isEmpty) {
+      return 'medicard_registration.validation.field_required'.tr();
+    }
+    if (value!.trim().length < 2) {
+      return 'medicard_registration.validation.name_length'.tr();
+    }
+    return null;
+  }
+
+  String? _validateEmail(String? value) {
+    final email = (value ?? '').trim();
+    if (email.isEmpty) return null;
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      return 'medicard_registration.validation.email_invalid'.tr();
+    }
+    return null;
+  }
+
+  String? _validateNationalId(String? value) {
+    final nationalId = LanguageHelper.convertArabicToEnglishNumerals(
+      (value ?? '').trim(),
+    );
+    if (nationalId.isEmpty) return null;
+    if (!RegExp(r'^[0-9]{14}$').hasMatch(nationalId)) {
+      return 'medicard_registration.validation.national_id_invalid'.tr();
+    }
+    return null;
   }
 
   Widget _buildTextField({
@@ -357,7 +443,10 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
             Text(label, style: AppTextStyles.font14BlackMedium(context)),
             if (isRequired) ...[
               SizedBox(width: 4.w),
-              Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+              Text(
+                '*',
+                style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+              ),
             ],
           ],
         ),
@@ -370,9 +459,13 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
           onChanged: onChanged,
           maxLength: maxLength,
           inputFormatters: inputFormatters,
-          validator: customValidator ?? (isRequired
-              ? (value) => (value?.isEmpty ?? true) ? 'medicard_registration.validation.field_required'.tr() : null
-              : null),
+          validator:
+              customValidator ??
+              (isRequired
+                  ? (value) => (value?.isEmpty ?? true)
+                        ? 'medicard_registration.validation.field_required'.tr()
+                        : null
+                  : null),
         ),
       ],
     );
@@ -384,10 +477,15 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       children: [
         Row(
           children: [
-            Text('medicard_registration.gender'.tr(),
-                style: AppTextStyles.font14BlackMedium(context)),
+            Text(
+              'medicard_registration.gender'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
             SizedBox(width: 4.w),
-            Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+            Text(
+              '*',
+              style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -413,11 +511,16 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.wc_rounded,
-                        color: const Color(0xFF1E3A8A), size: 20.sp),
+                    Icon(
+                      Icons.wc_rounded,
+                      color: const Color(0xFF1E3A8A),
+                      size: 20.sp,
+                    ),
                     SizedBox(width: 12.w),
-                    Text('medicard_registration.gender'.tr(),
-                        style: AppTextStyles.font14BlackMedium(context)),
+                    Text(
+                      'medicard_registration.gender'.tr(),
+                      style: AppTextStyles.font14BlackMedium(context),
+                    ),
                     const Spacer(),
                     _genderChip(
                       label: 'medicard_registration.male'.tr(),
@@ -494,9 +597,15 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       children: [
         Row(
           children: [
-            Text('medicard_registration.birthdate'.tr(), style: AppTextStyles.font14BlackMedium(context)),
+            Text(
+              'medicard_registration.birthdate'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
             SizedBox(width: 4.w),
-            Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+            Text(
+              '*',
+              style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -523,7 +632,9 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
             );
             if (pickedDate != null) {
               setState(() {
-                _birthDateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
+                _birthDateController.text = DateFormat(
+                  'yyyy-MM-dd',
+                ).format(pickedDate);
               });
             }
           },
@@ -554,9 +665,15 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       children: [
         Row(
           children: [
-            Text('medicard_registration.phone_number'.tr(), style: AppTextStyles.font14BlackMedium(context)),
+            Text(
+              'medicard_registration.phone_number'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
             SizedBox(width: 4.w),
-            Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+            Text(
+              '*',
+              style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -572,12 +689,17 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
             if (value == null || value.isEmpty) {
               return 'auth.signup.validation.phone_required'.tr();
             }
-            
+
             // Remove leading 0 if present
-            String cleanValue = value.startsWith('0') ? value.substring(1) : value;
-            
+            final normalizedValue =
+                LanguageHelper.convertArabicToEnglishNumerals(value.trim());
+            String cleanValue = normalizedValue.startsWith('0')
+                ? normalizedValue.substring(1)
+                : normalizedValue;
+
             // Check if it's 10 digits starting with 10, 11, 12, or 15
-            if (cleanValue.length == 10 && RegExp(r'^(10|11|12|15)[0-9]{8}$').hasMatch(cleanValue)) {
+            if (cleanValue.length == 10 &&
+                RegExp(r'^(10|11|12|15)[0-9]{8}$').hasMatch(cleanValue)) {
               return null;
             }
 
@@ -592,7 +714,10 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('medicard_registration.profile_photo'.tr(), style: AppTextStyles.font14BlackMedium(context)),
+        Text(
+          'medicard_registration.profile_photo'.tr(),
+          style: AppTextStyles.font14BlackMedium(context),
+        ),
         SizedBox(height: 8.h),
         GestureDetector(
           onTap: _pickImage,
@@ -650,9 +775,15 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       children: [
         Row(
           children: [
-            Text('medicard_registration.password'.tr(), style: AppTextStyles.font14BlackMedium(context)),
+            Text(
+              'medicard_registration.password'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
             SizedBox(width: 4.w),
-            Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+            Text(
+              '*',
+              style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -662,10 +793,10 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
           prefixIcon: Icons.lock_outline_rounded,
           isPassword: true,
           validator: (value) {
-            if (value?.isEmpty ?? true) {
+            if ((value ?? '').isEmpty) {
               return 'medicard_registration.validation.password_required'.tr();
             }
-            if (value!.length < 8) {
+            if (value!.trim().length < 8) {
               return 'medicard_registration.validation.password_length'.tr();
             }
             return null;
@@ -681,9 +812,15 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
       children: [
         Row(
           children: [
-            Text('medicard_registration.confirm_password'.tr(), style: AppTextStyles.font14BlackMedium(context)),
+            Text(
+              'medicard_registration.confirm_password'.tr(),
+              style: AppTextStyles.font14BlackMedium(context),
+            ),
             SizedBox(width: 4.w),
-            Text('*', style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp)),
+            Text(
+              '*',
+              style: TextStyle(color: AppColors.errorClr, fontSize: 14.sp),
+            ),
           ],
         ),
         SizedBox(height: 8.h),
@@ -693,11 +830,13 @@ class _MediCardSignupScreenState extends State<MediCardSignupScreen> {
           prefixIcon: Icons.lock_outline_rounded,
           isPassword: true,
           validator: (value) {
-            if (value?.isEmpty ?? true) {
-              return 'medicard_registration.validation.confirm_password_required'.tr();
+            if ((value ?? '').isEmpty) {
+              return 'medicard_registration.validation.confirm_password_required'
+                  .tr();
             }
-            if (value != _passwordController.text) {
-              return 'medicard_registration.validation.passwords_not_match'.tr();
+            if (value!.trim() != _passwordController.text.trim()) {
+              return 'medicard_registration.validation.passwords_not_match'
+                  .tr();
             }
             return null;
           },
