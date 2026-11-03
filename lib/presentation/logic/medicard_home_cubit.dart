@@ -19,7 +19,7 @@ class MedicardHomeCubit extends Cubit<MedicardHomeState> {
     this._getHomeInfoUseCase,
     this._getPersonalInfoUseCase,
     this._getTopProvidersForSliderUseCase,
-  ) : super(const MedicardHomeState.initial());
+  ) : super(const MedicardHomeState.loading());
 
   Future<void> getHomeInfo({
     required String cardNo,

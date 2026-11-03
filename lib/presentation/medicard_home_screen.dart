@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import '../core/constants/api_result.dart';
@@ -62,14 +63,20 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
 
+    // Kick off the guest check + data fetch after the first frame so that
+    // the BlocProvider is fully wired into the tree. The cubit starts in
+    // `loading`, so the spinner shows immediately on frame 1 — no empty-state
+    // flash. The setState for _isGuest is batched into the same microtask as
+    // getHomeInfo, so there is only one extra rebuild (loading→success).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadGuestAndFetch();
+      _loadAndFetch();
     });
   }
 
-  Future<void> _loadGuestAndFetch() async {
+  Future<void> _loadAndFetch() async {
     final guest = await SessionService.isGuest();
     if (!mounted) return;
+    // Batch _isGuest update with the fetch trigger in one frame.
     setState(() => _isGuest = guest);
     final lang = context.locale.languageCode;
     if (widget.cardNo != null && widget.cardNo!.isNotEmpty) {
@@ -78,8 +85,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
         lang: lang,
       );
     } else if (guest) {
-      // Guest uses the existing getHomeInfo flow without a CardNo;
-      // the repository returns the guest sentinel.
       context.read<MedicardHomeCubit>().getHomeInfo(cardNo: '', lang: lang);
     }
   }
@@ -189,53 +194,47 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
         );
       },
       builder: (context, state) {
+        final isLoading = state.maybeWhen(
+          loading: () => true,
+          orElse: () => false,
+        );
+        final successData = state.maybeWhen(
+          success: (homeInfo, personalInfo, sliderInfo) =>
+              (homeInfo: homeInfo, personalInfo: personalInfo, sliderInfo: sliderInfo),
+          orElse: () => null,
+        );
+
         return Scaffold(
           backgroundColor: const Color(0xFFF0F4F9),
-          body: state.maybeWhen(
-            loading: () => Stack(
-              children: [
-                _buildTopDecoration(),
-                SafeArea(
-                  child: Column(
-                    children: [
-                      _buildHeader(),
-                      const Expanded(
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF1E3A8A),
+          body: successData != null
+              ? FadeTransition(
+                  opacity: _fadeAnim,
+                  child: SlideTransition(
+                    position: _slideAnim,
+                    child: _buildBody(
+                      successData.homeInfo.data!,
+                      successData.personalInfo?.data,
+                      successData.sliderInfo?.data ?? [],
+                    ),
+                  ),
+                )
+              : Stack(
+                  children: [
+                    _buildTopDecoration(),
+                    SafeArea(
+                      child: Column(
+                        children: [
+                          _buildHeader(),
+                          Expanded(
+                            child: isLoading
+                                ? const _HomeShimmer()
+                                : _buildEmptyState(),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            success: (homeInfo, personalInfo, sliderInfo) => FadeTransition(
-              opacity: _fadeAnim,
-              child: SlideTransition(
-                position: _slideAnim,
-                child: _buildBody(
-                  homeInfo.data!,
-                  personalInfo?.data,
-                  sliderInfo?.data ?? [],
-                ),
-              ),
-            ),
-            orElse: () => Stack(
-              children: [
-                _buildTopDecoration(),
-                SafeArea(
-                  child: Column(
-                    children: [
-                      _buildHeader(),
-                      Expanded(child: _buildEmptyState()),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
         );
       },
     );
@@ -1318,6 +1317,71 @@ class _SummerTypeButton extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Home Shimmer Skeleton ───────────────────────────────────────────────────
+
+class _HomeShimmer extends StatelessWidget {
+  const _HomeShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: const Color(0xFFE2E8F0),
+      highlightColor: const Color(0xFFF8FAFC),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── MediCard skeleton ──────────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Container(
+                height: 190.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24.r),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 28.h),
+
+            // ── Section title skeleton ─────────────────────────────────────
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              child: Container(
+                width: 120.w,
+                height: 16.h,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 16.h),
+
+            // ── Action cards skeleton (5 cards) ───────────────────────────
+            ...List.generate(
+              5,
+              (i) => Padding(
+                padding: EdgeInsets.fromLTRB(20.w, 0, 20.w, 14.h),
+                child: Container(
+                  height: 72.h,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22.r),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
