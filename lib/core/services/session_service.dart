@@ -11,6 +11,11 @@ class SessionService {
   SessionService._();
 
   static Future<bool> isGuest() async {
+    // Logged-in always wins: a non-empty card number means authenticated.
+    final cardNo = await SharedPrefHelper.getString(
+      SharedPrefKeys.medicardCardNo,
+    );
+    if (cardNo.trim().isNotEmpty) return false;
     return SharedPrefHelper.getBool(SharedPrefKeys.medicardIsGuest);
   }
 
