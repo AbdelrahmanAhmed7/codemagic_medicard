@@ -830,13 +830,6 @@ class _MediCardHomeScreenState extends State<MediCardHomeScreen>
       extra: {'personalData': personalData, 'cardNo': widget.cardNo},
     );
 
-    if (result == newOrderTutorialReplayResult && context.mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _maybeRunHomeTour();
-      });
-      return;
-    }
-
     if (result == true && context.mounted && widget.cardNo != null) {
       cubit.getHomeInfo(cardNo: widget.cardNo!, lang: lang);
     }
