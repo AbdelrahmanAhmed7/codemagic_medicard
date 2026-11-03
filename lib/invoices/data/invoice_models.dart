@@ -104,6 +104,9 @@ class InvoiceRecord {
   final int id;
   final String providerLogo;
   final String providerName;
+  final String branchName;
+  final String address;
+  final String cancelReason;
   final String status;
   final String statusChar;
   final String notes;
@@ -117,6 +120,9 @@ class InvoiceRecord {
     required this.id,
     required this.providerLogo,
     required this.providerName,
+    required this.branchName,
+    required this.address,
+    required this.cancelReason,
     required this.status,
     required this.statusChar,
     required this.notes,
@@ -131,6 +137,9 @@ class InvoiceRecord {
     id: _asInt(json['id']),
     providerLogo: json['providerLogo'] as String? ?? '',
     providerName: json['providerName'] as String? ?? '',
+    branchName: json['branchName'] as String? ?? '',
+    address: json['address'] as String? ?? '',
+    cancelReason: json['cancelReason'] as String? ?? '',
     status: json['status'] as String? ?? '',
     statusChar: json['statusChar'] as String? ?? '',
     notes: json['notes'] as String? ?? '',
@@ -140,6 +149,10 @@ class InvoiceRecord {
     lineCount: _asInt(json['lineCount']),
     totalAmount: _asDouble(json['totalAmount']),
   );
+
+  bool get isPending =>
+      status.trim().toLowerCase() == 'pending' ||
+      statusChar.trim().toLowerCase() == 'p';
 }
 
 class CreatedInvoice {

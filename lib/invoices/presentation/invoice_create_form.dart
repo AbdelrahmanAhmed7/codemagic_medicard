@@ -430,7 +430,7 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
     Navigator.of(context, rootNavigator: true).pop();
     await dialog;
     if (!mounted) return;
-    context.go(
+    context.pushReplacement(
       Uri(
         path: '/medicard-invoices/history',
         queryParameters: {'cardNo': widget.cardNo},
@@ -602,10 +602,10 @@ class _InvoiceCreateFormState extends State<InvoiceCreateForm> {
                               ? 'invoice.choose_provider_first'.tr()
                               : 'invoice.branch_hint'.tr()
                         : (_branch!.branchName.trim().isNotEmpty &&
-                                _branch!.branchName.trim() !=
-                                    _branch!.displayAddress
-                            ? _branch!.branchName.trim()
-                            : ''),
+                                  _branch!.branchName.trim() !=
+                                      _branch!.displayAddress
+                              ? _branch!.branchName.trim()
+                              : ''),
                     leading: _branch == null
                         ? null
                         : const _PickerIcon(icon: Icons.location_on_outlined),

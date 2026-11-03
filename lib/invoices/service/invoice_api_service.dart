@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/network/backend_message_exception.dart';
 import '../data/invoice_models.dart';
 
 class InvoiceApiService {
@@ -122,6 +123,26 @@ class InvoiceApiService {
     );
   }
 
+  Future<String> cancelInvoice({
+    required String lang,
+    required String cardNo,
+    required int invoiceId,
+    required String reason,
+  }) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '$_baseUrl/$lang/Invoices/Cancel',
+        data: {'cardNo': cardNo, 'invoiceId': invoiceId, 'reason': reason},
+      );
+      final body = _requireSuccess(response.data);
+      return body['message']?.toString() ?? '';
+    } catch (error) {
+      final message = backendMessageFromError(error);
+      if (message != null) throw BackendMessageException(message);
+      rethrow;
+    }
+  }
+
   Map<String, dynamic> _requireSuccess(Map<String, dynamic>? response) {
     if (response == null) {
       throw const FormatException(
@@ -130,11 +151,10 @@ class InvoiceApiService {
     }
     if (response['success'] != true) {
       final message = response['message'] as String?;
-      throw StateError(
-        message?.isNotEmpty == true
-            ? message!
-            : 'The invoices API request failed',
-      );
+      if (message?.isNotEmpty == true) {
+        throw BackendMessageException(message!);
+      }
+      throw const FormatException('Invalid invoices API response');
     }
     return response;
   }

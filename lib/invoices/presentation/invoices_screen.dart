@@ -8,6 +8,7 @@ import '../../core/constants/constants.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/helpers/shared_pref_helper.dart';
 import '../../core/services/url_launcher_service.dart';
+import '../../core/theming/app_toast.dart';
 import '../data/invoice_models.dart';
 import '../repository/invoice_repository.dart';
 import 'invoice_create_form.dart';
@@ -109,27 +110,42 @@ class _InvoiceHistoryScreenState extends State<InvoiceHistoryScreen> {
     )).trim();
   }
 
+  void _goBack() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    context.go('/medicard-home');
+  }
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF3F6FA),
-    appBar: AppBar(
-      title: Text('invoice.my_invoices'.tr()),
-      backgroundColor: Colors.white,
-      foregroundColor: const Color(0xFF17324D),
-      surfaceTintColor: Colors.transparent,
-    ),
-    body: FutureBuilder<String>(
-      future: _cardNoFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final cardNo = snapshot.data ?? '';
-        if (cardNo.isEmpty) {
-          return _LoginRequired(onLogin: () => context.push('/medicard'));
-        }
-        return _InvoiceListTab(cardNo: cardNo, repository: _repository);
-      },
+  Widget build(BuildContext context) => PopScope(
+    canPop: context.canPop(),
+    onPopInvokedWithResult: (didPop, _) {
+      if (!didPop) _goBack();
+    },
+    child: Scaffold(
+      backgroundColor: const Color(0xFFF3F6FA),
+      appBar: AppBar(
+        title: Text('invoice.my_invoices'.tr()),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF17324D),
+        surfaceTintColor: Colors.transparent,
+        leading: BackButton(onPressed: _goBack),
+      ),
+      body: FutureBuilder<String>(
+        future: _cardNoFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final cardNo = snapshot.data ?? '';
+          if (cardNo.isEmpty) {
+            return _LoginRequired(onLogin: () => context.push('/medicard'));
+          }
+          return _InvoiceListTab(cardNo: cardNo, repository: _repository);
+        },
+      ),
     ),
   );
 }
@@ -264,6 +280,81 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _showCancelDialog(InvoiceRecord invoice) async {
+    final reasonController = TextEditingController();
+    var isSubmitting = false;
+
+    final message = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('invoice.cancel_title'.tr()),
+          content: TextField(
+            controller: reasonController,
+            enabled: !isSubmitting,
+            minLines: 3,
+            maxLines: 5,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'invoice.cancel_reason'.tr(),
+              hintText: 'invoice.cancel_reason_hint'.tr(),
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.of(dialogContext).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFB91C1C),
+              ),
+              child: Text('common.cancel'.tr()),
+            ),
+            FilledButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      setDialogState(() => isSubmitting = true);
+                      try {
+                        final backendMessage = await widget.repository
+                            .cancelInvoice(
+                              lang: _lang,
+                              cardNo: widget.cardNo,
+                              invoiceId: invoice.id,
+                              reason: reasonController.text.trim(),
+                            );
+                        if (dialogContext.mounted) {
+                          Navigator.of(dialogContext).pop(backendMessage);
+                        }
+                      } catch (error) {
+                        if (!dialogContext.mounted) return;
+                        showErrorToast(error.toString());
+                        setDialogState(() => isSubmitting = false);
+                      }
+                    },
+              child: isSubmitting
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text('invoice.confirm_cancel'.tr()),
+            ),
+          ],
+        ),
+      ),
+    );
+    reasonController.dispose();
+
+    if (!mounted || message == null) return;
+    if (message.isNotEmpty) showSuccessToast(message);
+    await reload();
   }
 
   @override
@@ -401,7 +492,13 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
               ),
             );
           }
-          return _InvoiceCard(invoice: _invoices[index]);
+          final invoice = _invoices[index];
+          return _InvoiceCard(
+            invoice: invoice,
+            onCancel: invoice.isPending
+                ? () => _showCancelDialog(invoice)
+                : null,
+          );
         },
       ),
     );
@@ -410,15 +507,17 @@ class _InvoiceListTabState extends State<_InvoiceListTab> {
 
 class _InvoiceCard extends StatelessWidget {
   final InvoiceRecord invoice;
+  final VoidCallback? onCancel;
 
-  const _InvoiceCard({required this.invoice});
+  const _InvoiceCard({required this.invoice, this.onCancel});
 
   Color get _statusColor {
-    switch (invoice.status.toLowerCase()) {
+    switch (invoice.status.trim().toLowerCase()) {
       case 'approved':
       case 'completed':
         return const Color(0xFF15803D);
       case 'rejected':
+      case 'canceled':
       case 'cancelled':
         return const Color(0xFFB91C1C);
       default:
@@ -427,7 +526,7 @@ class _InvoiceCard extends StatelessWidget {
   }
 
   String get _statusLabel {
-    switch (invoice.status.toLowerCase()) {
+    switch (invoice.status.trim().toLowerCase()) {
       case 'pending':
         return 'invoice.status_pending'.tr();
       case 'approved':
@@ -436,6 +535,7 @@ class _InvoiceCard extends StatelessWidget {
         return 'invoice.status_completed'.tr();
       case 'rejected':
         return 'invoice.status_rejected'.tr();
+      case 'canceled':
       case 'cancelled':
         return 'invoice.status_cancelled'.tr();
       default:
@@ -531,6 +631,15 @@ class _InvoiceCard extends StatelessWidget {
               ),
             ],
           ),
+          if (invoice.branchName.trim().isNotEmpty ||
+              invoice.address.trim().isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            _InvoiceDetail(
+              icon: Icons.location_on_outlined,
+              label: invoice.branchName.trim(),
+              value: invoice.address.trim(),
+            ),
+          ],
           if (invoice.notes.isNotEmpty) ...[
             SizedBox(height: 12.h),
             Container(
@@ -550,6 +659,15 @@ class _InvoiceCard extends StatelessWidget {
                   color: const Color(0xFF475569),
                 ),
               ),
+            ),
+          ],
+          if (invoice.cancelReason.trim().isNotEmpty) ...[
+            SizedBox(height: 12.h),
+            _InvoiceDetail(
+              icon: Icons.info_outline_rounded,
+              label: 'invoice.cancel_reason'.tr(),
+              value: invoice.cancelReason.trim(),
+              isDestructive: true,
             ),
           ],
           if (invoice.createdAt != null ||
@@ -632,10 +750,78 @@ class _InvoiceCard extends StatelessWidget {
               ),
             ),
           ],
+          if (onCancel != null) ...[
+            SizedBox(height: 10.h),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onCancel,
+                icon: Icon(Icons.cancel_outlined, size: 18.sp),
+                label: Text('invoice.cancel_invoice'.tr()),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFB91C1C),
+                  side: const BorderSide(color: Color(0xFFB91C1C)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     ),
   );
+}
+
+class _InvoiceDetail extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isDestructive;
+
+  const _InvoiceDetail({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive
+        ? const Color(0xFFB91C1C)
+        : const Color(0xFF475569);
+    final visibleText = [
+      if (label.isNotEmpty) label,
+      if (value.isNotEmpty && value != label) value,
+    ].join(' · ');
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: isDestructive
+            ? const Color(0xFFFEF2F2)
+            : const Color(0xFFF7F9FB),
+        borderRadius: BorderRadius.circular(13.r),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17.sp, color: color),
+          SizedBox(width: 7.w),
+          Expanded(
+            child: Text(
+              visibleText,
+              style: TextStyle(fontSize: 12.sp, height: 1.4, color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _InvoiceMetadata extends StatelessWidget {

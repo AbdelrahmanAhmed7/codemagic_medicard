@@ -472,7 +472,12 @@
     "status_completed": "Completed",
     "status_rejected": "Rejected",
     "status_cancelled": "Cancelled",
-    "download_pdf": "Download Invoice PDF"
+    "download_pdf": "Download Invoice PDF",
+    "cancel_invoice": "Cancel invoice",
+    "cancel_title": "Cancel invoice",
+    "cancel_reason": "Cancellation reason",
+    "cancel_reason_hint": "Enter the cancellation reason",
+    "confirm_cancel": "Confirm cancellation"
   },
   "notifications": {
     "title": "Notification",

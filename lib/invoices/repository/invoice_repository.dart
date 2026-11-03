@@ -53,4 +53,16 @@ class InvoiceRepository {
     status: status,
     page: page,
   );
+
+  Future<String> cancelInvoice({
+    required String lang,
+    required String cardNo,
+    required int invoiceId,
+    required String reason,
+  }) => _apiService.cancelInvoice(
+    lang: lang,
+    cardNo: cardNo,
+    invoiceId: invoiceId,
+    reason: reason,
+  );
 }

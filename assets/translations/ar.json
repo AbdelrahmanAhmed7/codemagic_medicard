@@ -466,7 +466,12 @@
     "status_completed": "مكتمل",
     "status_rejected": "مرفوض",
     "status_cancelled": "ملغي",
-    "download_pdf": "تحميل الفاتورة PDF"
+    "download_pdf": "تحميل الفاتورة PDF",
+    "cancel_invoice": "إلغاء الفاتورة",
+    "cancel_title": "إلغاء الفاتورة",
+    "cancel_reason": "سبب الإلغاء",
+    "cancel_reason_hint": "اكتب سبب إلغاء الفاتورة",
+    "confirm_cancel": "تأكيد الإلغاء"
   },
   "notifications": {
     "title": "الإشعارات",
